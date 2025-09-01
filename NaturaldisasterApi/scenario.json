@@ -1,0 +1,104 @@
+{
+  "defaults": {
+    "dangerLevel": "high",
+    "historical": { "steps": 3, "factor": 0.75 },
+    "projected":  { "steps": 1, "factor": 1.3 },
+    "description": "Planned training scenario"
+  },
+  "events": [
+    {
+      "type": "wildfire",
+      "center": [23.80, 38.05],
+      "radiusKm": 12,
+      "shape": "ellipse",
+      "start": "2025-06-15T09:00:00Z",
+      "durationHours": 18,
+      "dangerLevel": "extreme"
+    },
+    {
+      "type": "flood",
+      "center": [23.02, 40.73],
+      "radiusKm": 8,
+      "shape": "blob",
+      "start": "2025-05-20T06:00:00Z",
+      "end":   "2025-05-21T14:00:00Z",
+      "historical": { "steps": 2, "factor": 0.7 },
+      "projected":  { "steps": 0 }
+    },
+    {
+      "type": "earthquake",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[23.70,37.95],[23.80,37.95],[23.80,38.02],[23.70,38.02],[23.70,37.95]]]
+      },
+      "start": "2025-04-01T10:00:00Z",
+      "end":   "2025-04-01T18:00:00Z",
+      "dangerLevel": "moderate"
+    },
+    {
+      "type": "earthquake",
+      "center": [23.06, 40.76],
+      "radiusKm": 8,
+      "shape": "blob",
+      "start": "2025-04-01T10:00:00Z",
+      "end":   "2025-04-01T18:00:00Z",
+      "dangerLevel": "moderate"
+    },
+
+
+    {
+      "type": "wildfire",
+      "center": [23.82, 38.06],
+      "radiusKm": 10,
+      "shape": "blob",
+      "start": "NOW-3h",
+      "projected": { "steps": 2, "factor": 1.2 },
+      "dangerLevel": "high"
+    },
+    {
+      "type": "wildfire",
+      "center": [21.83, 38.21],
+      "radiusKm": 7,
+      "shape": "blob",
+      "start": "NOW-4h",
+      "projected": { "steps": 1, "factor": 1.25 },
+      "dangerLevel": "moderate"
+    },
+    {
+      "type": "storm",
+      "center": [22.55, 39.75],
+      "radiusKm": 15,
+      "shape": "ellipse",
+      "start": "NOW-2h",
+      "projected": { "steps": 2, "factor": 1.15 },
+      "dangerLevel": "high"
+    },
+    {
+      "type": "wildfire",
+      "center": [25.05, 35.26],
+      "radiusKm": 9,
+      "shape": "blob",
+      "start": "NOW-5h",
+      "projected": { "steps": 1, "factor": 1.2 },
+      "dangerLevel": "extreme"
+    },
+    {
+      "type": "earthquake",
+      "center": [20.92, 39.75],
+      "radiusKm": 12,
+      "shape": "blob",
+      "start": "NOW-1h",
+      "projected": { "steps": 0 },
+      "dangerLevel": "moderate"
+    },
+    {
+      "type": "earthquake",
+      "center": [22.939, 40.3525],
+      "radiusKm": 30,
+      "shape": "blob",
+      "start": "NOW-2h",
+      "projected": { "steps": 0 },
+      "dangerLevel": "moderate"
+    }
+  ]
+}

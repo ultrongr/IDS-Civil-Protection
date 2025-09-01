@@ -71,13 +71,71 @@ services:
       - connector-datab:/var/lib/postgresql/data
     networks:
       - local
-      
+
+  postgresmhtroo:
+    image: postgres:13
+    container_name: 'postgresmhtroo-container'
+    ports:
+      - "5434:5432"
+    environment:
+      - POSTGRES_USER=postgresusermhtroo
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=connectormhtroodb
+    volumes:
+      - connector-datamhtroo:/var/lib/postgresql/data
+    networks:
+      - local
+  
+  postgresameaclub:
+    image: postgres:13
+    container_name: 'postgresameaclub-container'
+    ports:
+      - "5435:5432"
+    environment:
+      - POSTGRES_USER=postgresuserameaclub
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=connectorameaclubdb
+    volumes:
+      - connector-dataameaclub:/var/lib/postgresql/data
+    networks:
+      - local
+  
+  postgresnaturaldisaster:
+    image: postgres:13
+    container_name: 'postgresnaturaldisaster-container'
+    ports:
+      - "5436:5432"
+    environment:
+      - POSTGRES_USER=postgresusernaturaldisaster
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=connectornaturaldisasterdb
+    volumes:
+      - connector-datanaturaldisaster:/var/lib/postgresql/data
+    networks:
+      - local
+
+  postgrescivilservice:
+    image: postgres:13
+    container_name: 'postgrescivilservice-container'
+    ports:
+      - "5437:5432"
+    environment:
+      - POSTGRES_USER=postgresusercivilservice
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=connectorcivilservicedb
+    volumes:
+      - connector-datacivilservice:/var/lib/postgresql/data
+    networks:
+      - local
+
+
   connectora:
     image: ghcr.io/international-data-spaces-association/dataspace-connector:8.0.2
     container_name: connectora
     ports:
       - 8080:8080
     environment:
+      - SPRING_AUTOCONFIGURE_EXCLUDE=org.springframework.boot.actuate.autoconfigure.metrics.SystemMetricsAutoConfiguration
       - CONFIGURATION_PATH=/config/config.json
       - DAPS_URL=https://omejdn
       - DAPS_TOKEN_URL=https://omejdn/auth/token
@@ -111,6 +169,7 @@ services:
     ports:
       - 8081:8081
     environment:
+      - SPRING_AUTOCONFIGURE_EXCLUDE=org.springframework.boot.actuate.autoconfigure.metrics.SystemMetricsAutoConfiguration
       - CONFIGURATION_PATH=/config/config.json
       - SERVER_PORT=8081
       - DAPS_URL=https://omejdn
@@ -134,10 +193,193 @@ services:
       - ./DataspaceConnectorB/conf/config.json:/config/config.json
       - ./DataspaceConnectorB/conf/connectorB.p12:/conf/connectorB.p12
       - ./DataspaceConnectorB/conf/truststore.p12:/config/truststore.p12
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - local
+
+
     depends_on:
       - postgresb
+
+  connectormhtroo:
+    image: ghcr.io/international-data-spaces-association/dataspace-connector:8.0.2
+    container_name: connectormhtroo
+    ports:
+      - 8082:8082
+    environment:
+      - SPRING_AUTOCONFIGURE_EXCLUDE=org.springframework.boot.actuate.autoconfigure.metrics.SystemMetricsAutoConfiguration
+      - SERVER_PORT=8082
+      - CONFIGURATION_PATH=/config/config.json
+      - DAPS_URL=https://omejdn
+      - DAPS_TOKEN_URL=https://omejdn/auth/token
+      - DAPS_KEY_URL=https://omejdn/auth/jwks.json
+      - DAPS_INCOMING_DAT_DEFAULT_WELLKNOWN=/jwks.json
+      - SERVER_SSL_KEY-STORE=file:///conf/connectorMhtroo.p12
+      # Define the PostgreSQL setup
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgresmhtroo:5432/connectormhtroodb 
+      - SPRING_DATASOURCE_PLATFORM=postgres
+      - SPRING_DATASOURCE_DRIVERCLASSNAME=org.postgresql.Driver
+      - SPRING_DATASOURCE_USERNAME=postgresusermhtroo
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+      # Timeouts for HTTP requests
+      - HTTP_TIMEOUT_CONNECT=20000
+      - HTTP_TIMEOUT_READ=20000
+      - HTTP_TIMEOUT_WRITE=20000
+      - HTTP_TIMEOUT_CALL=20000
+    volumes:
+      - ./DataspaceConnectorMhtroo/conf/config.json:/config/config.json
+      - ./DataspaceConnectorMhtroo/conf/connectorMhtroo.p12:/conf/connectorMhtroo.p12
+      - ./DataspaceConnectorMhtroo/conf/truststore.p12:/config/truststore.p12
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      local:
+        aliases:
+          - connectormhtroo
+    depends_on:
+      - postgresmhtroo
+    
+
+  connectorameaclub:
+    image: ghcr.io/international-data-spaces-association/dataspace-connector:8.0.2
+    container_name: connectorameaclub
+    ports:
+      - 8083:8083
+    environment:
+      - SPRING_AUTOCONFIGURE_EXCLUDE=org.springframework.boot.actuate.autoconfigure.metrics.SystemMetricsAutoConfiguration
+      - SERVER_PORT=8083
+      - CONFIGURATION_PATH=/config/config.json
+
+      # DAPS (same as your other connectors)
+      - DAPS_URL=https://omejdn
+      - DAPS_TOKEN_URL=https://omejdn/auth/token
+      - DAPS_KEY_URL=https://omejdn/auth/jwks.json
+      - DAPS_INCOMING_DAT_DEFAULT_WELLKNOWN=/jwks.json
+
+      # TLS/keystore
+      - SERVER_SSL_KEY-STORE=file:///conf/connectorAmeaclub.p12
+
+      # Postgres (points to the new DB)
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgresameaclub:5432/connectorameaclubdb
+      - SPRING_DATASOURCE_PLATFORM=postgres
+      - SPRING_DATASOURCE_DRIVERCLASSNAME=org.postgresql.Driver
+      - SPRING_DATASOURCE_USERNAME=postgresuserameaclub
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+
+      # Timeouts
+      - HTTP_TIMEOUT_CONNECT=20000
+      - HTTP_TIMEOUT_READ=20000
+      - HTTP_TIMEOUT_WRITE=20000
+      - HTTP_TIMEOUT_CALL=20000
+
+    volumes:
+      - ./DataspaceConnectorAmeaclub/conf/config.json:/config/config.json
+      - ./DataspaceConnectorAmeaclub/conf/connectorAmeaclub.p12:/conf/connectorAmeaclub.p12
+      - ./DataspaceConnectorAmeaclub/conf/truststore.p12:/config/truststore.p12
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    networks:
+      local:
+        aliases:
+          - connectorameaclub
+
+    depends_on:
+      - postgresameaclub
+
+  connectornaturaldisaster:
+    image: ghcr.io/international-data-spaces-association/dataspace-connector:8.0.2
+    container_name: connectornaturaldisaster
+    ports:
+      - 8084:8084
+    environment:
+      - SPRING_AUTOCONFIGURE_EXCLUDE=org.springframework.boot.actuate.autoconfigure.metrics.SystemMetricsAutoConfiguration
+      - SERVER_PORT=8084
+      - CONFIGURATION_PATH=/config/config.json
+      # DAPS
+      - DAPS_URL=https://omejdn
+      - DAPS_TOKEN_URL=https://omejdn/auth/token
+      - DAPS_KEY_URL=https://omejdn/auth/jwks.json
+      - DAPS_INCOMING_DAT_DEFAULT_WELLKNOWN=/jwks.json
+      # TLS/keystore
+      - SERVER_SSL_KEY-STORE=file:///conf/connectorNaturaldisaster.p12
+      # Postgres
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgresnaturaldisaster:5432/connectornaturaldisasterdb
+      - SPRING_DATASOURCE_PLATFORM=postgres
+      - SPRING_DATASOURCE_DRIVERCLASSNAME=org.postgresql.Driver
+      - SPRING_DATASOURCE_USERNAME=postgresusernaturaldisaster
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+      # Timeouts
+      - HTTP_TIMEOUT_CONNECT=20000
+      - HTTP_TIMEOUT_READ=20000
+      - HTTP_TIMEOUT_WRITE=20000
+      - HTTP_TIMEOUT_CALL=20000
+    volumes:
+      - ./DataspaceConnectorNaturaldisaster/conf/config.json:/config/config.json
+      - ./DataspaceConnectorNaturaldisaster/conf/connectorNaturaldisaster.p12:/conf/connectorNaturaldisaster.p12
+      - ./DataspaceConnectorNaturaldisaster/conf/truststore.p12:/config/truststore.p12
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      local:
+        aliases:
+          - connectornaturaldisaster
+    depends_on:
+      - postgresnaturaldisaster
+
+  connectorcivilservice:
+    image: ghcr.io/international-data-spaces-association/dataspace-connector:8.0.2
+    container_name: connectorcivilservice
+    ports:
+      - 8085:8085
+    environment:
+      - SPRING_AUTOCONFIGURE_EXCLUDE=org.springframework.boot.actuate.autoconfigure.metrics.SystemMetricsAutoConfiguration
+      - SERVER_PORT=8085
+      - CONFIGURATION_PATH=/config/config.json
+
+      # DAPS (same as your other connectors)
+      - DAPS_URL=https://omejdn
+      - DAPS_TOKEN_URL=https://omejdn/auth/token
+      - DAPS_KEY_URL=https://omejdn/auth/jwks.json
+      - DAPS_INCOMING_DAT_DEFAULT_WELLKNOWN=/jwks.json
+
+      # TLS/keystore (note capital C in file name)
+      - SERVER_SSL_KEY-STORE=file:///conf/connectorCivilservice.p12
+
+      # Postgres for Civilservice
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgrescivilservice:5432/connectorcivilservicedb
+      - SPRING_DATASOURCE_PLATFORM=postgres
+      - SPRING_DATASOURCE_DRIVERCLASSNAME=org.postgresql.Driver
+      - SPRING_DATASOURCE_USERNAME=postgresusercivilservice
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+
+      # Timeouts
+      - HTTP_TIMEOUT_CONNECT=20000
+      - HTTP_TIMEOUT_READ=20000
+      - HTTP_TIMEOUT_WRITE=20000
+      - HTTP_TIMEOUT_CALL=20000
+
+    volumes:
+      - ./DataspaceConnectorCivilservice/conf/config.json:/config/config.json
+      - ./DataspaceConnectorCivilservice/conf/connectorCivilservice.p12:/conf/connectorCivilservice.p12
+      - ./DataspaceConnectorCivilservice/conf/truststore.p12:/config/truststore.p12
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    networks:
+      local:
+        aliases:
+          - connectorcivilservice
+
+    depends_on:
+      - postgrescivilservice
 
   broker-reverseproxy:
     image: idstestbed/mdb-reverseproxy:5.0.3
@@ -183,6 +425,12 @@ volumes:
   broker-fuseki: {}
   connector-dataa: {}
   connector-datab: {}
+  connector-datamhtroo: {}
+  connector-dataameaclub: {}
+  connector-datanaturaldisaster: {}
+  connector-datacivilservice: {}
+
+
 
 networks:
   local:

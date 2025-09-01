@@ -1,0 +1,411 @@
+    1  docker
+    2  sudo docker version
+    3  sudo apt install apt-transport-https ca-certificates curl software-properties-common -y
+    4  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+    5  echo   "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] \
+    6    https://download.docker.com/linux/ubuntu \
+    7    $(lsb_release -cs) stable" |   sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    8  sudo apt update
+    9  sudo apt install docker-ce docker-ce-cli containerd.io -y
+   10  sudo systemctl status docker
+   11  docker version
+   12  docker run hello-world
+   13  sudo docker run hello-world
+   14  sudo usermod -aG docker $USER
+   15  newgrp docker
+   16  cd Desktop
+   17  cd IDS-testbed/
+   18  ls
+   19  cd DAPS
+   20  ls
+   21  docker run -d --name omejdn -p 4567:4567 -v ./config:/opt/config -v ./keys:/opt/keys daps
+   22  chmod +x extensions.sh
+   23  grep daps
+   24  cd ..
+   25  sudo apt install docker-compose-plugin -y
+   26  docker compose version
+   27  sudo apt-get install virtualbox-guest-x11
+   28  sudo VBoxClient --clipboard
+   29  cd Desktop
+   30  ls
+   31  cd IDS-testbed/
+   32  ks
+   33  ls
+   34  docker compose up -d
+   35  ls
+   36  cd ..
+   37  docker compose up -d
+   38  cd IDS-testbed/
+   39  ls
+   40  cd minimum-viable-data-space/
+   41  ls
+   42  cd ..
+   43  ls
+   44  cd Desktop
+   45  git clone https://github.com/International-Data-Spaces-Association/IDS-testbed.git
+   46  cd IDS-testbed
+   47  ls
+   48  docker-compose up
+   49  sudo docker-compose up
+   50  sudo apt install docker-compose
+   51  docker-compose up
+   52  cd Deskto
+   53  cd Desktop
+   54  cd IDS-testbed
+   55  ls
+   56  docker compose up
+   57  sudo lsof -i :80
+   58  sudo systemctl stop apache2
+   59  docker compose up
+   60  clc
+   61  clear
+   62  cd ..
+   63  cd Desktop
+   64  cd IDS-testbed
+   65  ls
+   66  sudo systemctl stop apache2
+   67  docker compose up
+   68  sudo apt install postman
+   69  sudo snap isntall postman
+   70  sudo snap install postman
+   71  /bin/python3 /home/kostas/.vscode/extensions/ms-python.python-2025.6.1-linux-x64/python_files/printEnvVariablesToFile.py /home/kostas/.vscode/extensions/ms-python.python-2025.6.1-linux-x64/python_files/deactivate/bash/envVars.txt
+   72  ./pki.py subca list
+   73  cd ..
+   74  ./pki.py subca list
+   75  cd ..
+   76  ./pki.py subca list
+   77  ./setup_PKI.sh ./data-cfssl/certs
+   78  cfssl version
+   79  sydo apt install golang-cfssl
+   80  sudo apt install golang-cfssl
+   81  cfssljson --version
+   82  cfssljson -version
+   83  cfssljson version
+   84  cfssl version && cfssljson --version
+   85  npm install
+   86  sudo apt install npm
+   87  npm start
+   88  npm init
+   89  npm start
+   90  node server.js
+   91  cat package.json
+   92  cat packagea.json
+   93  cat package.json
+   94  npm start
+   95  node server.js
+   96  npm install
+   97  node server.js
+   98  npm install mongoose
+   99  npm install mongoose-field-encryption node-restful
+  100  npm uninstall restful.mongoose
+  101  npm uninstall node-restful
+  102  npm install mongoose-field-encryption
+  103  node server.js
+  104  node --trace-warnings server.js
+  105  cfssl genkey ConnectorAmea.json | cfssljson -bare ConnectorAmea
+  106  ls
+  107  cfssl genkey connectorAmea.json | cfssljson -bare ConnectorAmea
+  108  cd ..
+  109  cfssl sign -ca ./data-cfssl/certs/ca/ca.pem            -ca-key ./data-cfssl/certs/ca/ca-key.pem            -config ./data-cfssl/certs/subca/subca-config.json            ConnectorAmea.csr | cfssljson -bare ConnectorAmea
+  110  cfssl sign -ca ./data-cfssl/subca/subca.pem            -ca-key ./data-cfssl/subca/subca-key.pem            -config ./pkiInput/subca.json           data-cfssl/certs/ConnectorAmea.csr | cfssljson -bare ConnectorAmea
+  111  cfssl sign -ca ./data-cfssl/subca/subca.pem            -ca-key ./data-cfssl/subca/subca-key.pem            -config ./pkiInput/subca.json           ./data-cfssl/certs/ConnectorAmea.csr | cfssljson -bare ConnectorAmea
+  112  cfssl sign   -ca ./data-cfssl/subca/subca.pem   -ca-key ./data-cfssl/subca/subca-key.pem   -config ./pkiInput/subca.json   ./data-cfssl/certs/ConnectorAmea.csr | cfssljson -bare ConnectorAmea
+  113  cd ..
+  114  ./pki.py
+  115  python3 pki.py
+  116  find .-type f -name "pki.py"
+  117  find . -type f -name "pki.py"
+  118  cd CertificateAuthority/
+  119  cat setup_PKI.sh
+  120  ./register_connector.sh connectorAmea
+  121  ./register_connector.sh ConnectorAmea
+  122  openssl pkcs12 -export -out ConnectorAmea.p12 -inkey ConnectorAmea-key.pem -in ConnectorAmea.pem -passout pass:password
+  123  openssl pkcs12 -in ConnectorAmea.p12 -out ConnectorAmea.cert -nokeys -nodes -passin pass:password
+  124  cd ..
+  125  node server.js
+  126  cfssl genkey connectorMhtroo.json | cfssljson -bare ConnectorMhtroo
+  127  cd ..
+  128  cd CertificateAuthority/
+  129  cfssl genkey connectorMhtroo.json | cfssljson -bare ConnectorMhtroo
+  130  ls
+  131  cd pkiInput
+  132  cfssl genkey connectorMhtroo.json | cfssljson -bare ConnectorMhtroo
+  133  ls
+  134  cd ..
+  135  ls
+  136  cfssl sign   -ca ./data-cfssl/subca/subca.pem   -ca-key ./data-cfssl/subca/subca-key.pem   -config ./pkiInput/subca.json   ./data-cfssl/certs/ConnectorMhtroo.csr | cfssljson -bare ConnectorMhtroo
+  137  ./register_connector.sh connectorMhtroo
+  138  cd ..
+  139  cd DAPS
+  140  ./register_connector.sh connectorMhtroo
+  141  openssl pkcs12 -export   -out connectorMhtroo.p12   -inkey connectorMhtroo.key   -in connectorMhtroo.crt   -passout pass:yourpassword
+  142  cd keys
+  143  openssl pkcs12 -export   -out connectorMhtroo.p12   -inkey connectorMhtroo.key   -in connectorMhtroo.crt   -passout pass:password
+  144  cd ..
+  145  cd CertificateAuthority/
+  146  ls
+  147  cd data-cfssl
+  148  ls
+  149  cd certs
+  150  openssl pkcs12 -export   -out connectorMhtroo.p12   -inkey connectorMhtroo.key   -in connectorMhtroo.crt   -passout pass:password
+  151  openssl pkcs12 -export   -out connectorMhtroo.p12   -inkey connectorMhtroo-key.pem   -in connectorMhtroo.crt   -passout pass:password
+  152  openssl pkcs12 -export   -out connectorMhtroo.p12   -inkey connectorMhtroo-key.pem   -in connectorMhtroo.pem   -passout pass:password
+  153  openssl pkcs12 -in connectorMhtroo.p12 -out connectorMhtroo.cert -nokeys -nodes -passin pass:password
+  154  cd ..
+  155  cd DAPS
+  156  ls
+  157  register_connector.sh connectorAmea
+  158  ./register_connector.sh connectorMhtroo
+  159  /bin/python3 /home/kostas/.vscode/extensions/ms-python.python-2025.10.0-linux-x64/python_files/printEnvVariablesToFile.py /home/kostas/.vscode/extensions/ms-python.python-2025.10.0-linux-x64/python_files/deactivate/bash/envVars.txt
+  160  cd Desktop
+  161  cd IDS-testbed
+  162  docker compose up
+  163  sudo systemctl stop apache2
+  164  docker compose up
+  165  docker compose down
+  166  docker compose up
+  167  docker compose down
+  168  docker compose up
+  169  docker compose down
+  170  docker compose up
+  171  docker compose down
+  172  docker compose up --build
+  173  docker exec -it connectormhtroo cat /config/config.json
+  174  docker ps
+  175  docker compose up connectormhtroo
+  176  docker ps
+  177  docker compose down
+  178  docker compose run --entrypoint sh connectormhtroo
+  179  realpath ./DataspaceConnectorMhtroo/conf/config.json
+  180  docker run --rm -it -v "$PWD/DataspaceConnectorMhtroo/conf":/config postgres:13 ls -l /config
+  181  docker run --rm -it -v "$PWD/DataspaceConnectorMhtroo/conf":/config postgres:13 cat /config/config.json
+  182  docker compose down
+  183  docker compose up --build
+  184  chmod 644 DataspaceConnectorMhtroo/conf/connectorMhtroo.p12
+  185  ls -l DataspaceConnectorMhtroo/conf/connectorMhtroo.p12
+  186  docker compose down
+  187  docker compose up --build connectormhtroo
+  188  docker compose down
+  189  docker compose up --build connectormhtroo
+  190  docker compose down
+  191  docker compose up --build connectormhtroo
+  192  docker compose down
+  193  docker compose up --build connectormhtroo
+  194  docker compose down
+  195  docker compose up --build connectormhtroo
+  196  chmod 644 DataspaceConnectorMhtroo/conf/config.json
+  197  chmod 644 DataspaceConnectorMhtroo/conf/connectorMhtroo.json
+  198  chmod 644 DataspaceConnectorMhtroo/conf/connectorMhtroo.p12
+  199  chmod 644 DataspaceConnectorMhtroo/conf/truststore.p12
+  200  docker compose down
+  201  docker compose up --build connectormhtroo
+  202  docker compose down
+  203  docker compose up --build connectormhtroo
+  204  docker compose down
+  205  docker compose up --build connectormhtroo
+  206  docker compose down
+  207  docker compose up --build connectormhtroo
+  208  docker compose down
+  209  docker compose up --build connectormhtroo
+  210  docker compose down
+  211  docker compose up --build connectormhtroo
+  212  docker compose down
+  213  docker compose up --build connectormhtroo
+  214  docker compose down
+  215  docker compose up
+  216  sudo apt update
+  217  sudo apt install qdirstat
+  218  sudo apt install -y build-essential dkms linux-headers-$(uname -r)
+  219  sudo apt install -y virtualbox-guest-dkms virtualbox-guest-utils virtualbox-guest-x11
+  220  sudo apt update
+  221  sudo apt install -y virtualbox-guest-dkms virtualbox-guest-utils virtualbox-guest-x11
+  222  sudo apt install -y software-properties-common
+  223  sudo add-apt-repository universe
+  224  sudo add-apt-repository multiverse
+  225  sudo apt update
+  226  sudo apt install -y virtualbox-guest-dkms virtualbox-guest-utils virtualbox-guest-x11
+  227  sudo apt update
+  228  sudo apt install -y build-essential dkms linux-headers-$(uname -r)
+  229  sudo mkdir -p /mnt/cdrom
+  230  sudo mount /dev/cdrom /mnt/cdrom
+  231  sudo /mnt/cdrom/VBoxLinuxAdditions.run
+  232  sudo systemctl enable vboxservice
+  233  sudo systemctl start vboxservice
+  234  sudo reboot
+  235  sudo apt update
+  236  sudo apt install -y build-essential dkms linux-headers-$(uname -r)
+  237  sudo mkdir -p /mnt/cdrom
+  238  sudo mount /dev/cdrom /mnt/cdrom
+  239  sudo /mnt/cdrom/VBoxLinuxAdditions.run
+  240  sudo systemctl enable vboxservice
+  241  sudo systemctl start vboxservice
+  242  sudo apt update
+  243  sudo apt install -y build-essential dkms linux-headers-$(uname -r) virtualbox-guest-dkms virtualbox-guest-utils virtualbox-guest-x11
+  244  sudo systemctl enable virtualbox-guest-utils.service virtualbox-guest-x11.service
+  245  sudo systemctl start  virtualbox-guest-utils.service virtualbox-guest-x11.service
+  246  sudo apt update && sudo apt install -y build-essential dkms linux-headers-$(uname -r) bzip2 gcc make perl
+  247  # Now, from VirtualBox menu on the host -> Devices -> Insert Guest Additions CD Image...
+  248  # Then in the guest:
+  249  cd /media/$USER/VBox_GAs* || cd /media/$USER/VBoxAdditions* || cd /media/$USER/*VBox*
+  250  sudo sh ./VBoxLinuxAdditions.run
+  251  sudo mkdir -p /mnt/cdrom
+  252  sudo mount /dev/cdrom /mnt/cdrom
+  253  sudo sh /mnt/cdrom/VBoxLinuxAdditions.run
+  254  sudo apt update && sudo apt install -y build-essential dkms linux-headers-$(uname -r) && sudo mkdir -p /mnt/cdrom && sudo mount /dev/cdrom /mnt/cdrom && sudo sh /mnt/cdrom/VBoxLinuxAdditions.run && sudo umount /mnt/cdrom && \
+  255  sudo apt update && sudo apt install -y build-essential dkms linux-headers-$(uname -r) && sudo mkdir -p /mnt/cdrom && sudo mount /dev/cdrom /mnt/cdrom && sudo sh /mnt/cdrom/VBoxLinuxAdditions.run && sudo umount /mnt/cdrom
+  256  # 1. Turn off all swapping
+  257  sudo swapoff -a
+  258  # 2. Remove the old swapfile
+  259  sudo rm -f /swapfile
+  260  # 3. Create a new 1 GiB swapfile
+  261  sudo fallocate -l 1G /swapfile
+  262  # 4. Secure the file
+  263  sudo chmod 600 /swapfile
+  264  # 5. Format it as swap
+  265  sudo mkswap /swapfile
+  266  # 6. Turn swapping back on
+  267  sudo swapon /swapfile
+  268  # 7. Ensure /swapfile is listed correctly in /etc/fstab
+  269  #    (removes any old swapfile entries, then appends the correct one)
+  270  sudo sed -i.bak '/\/swapfile/d' /etc/fstab
+  271  echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+  272  # 8. Verify you now have a 1 GiB swap area
+  273  free -h
+  274  swapon --show
+  275  sudo swapoff /swap.img
+  276  sudo nano /etc/fstab
+  277  sudo rm /swap.img
+  278  sudo ss -tulnp | grep ':80'
+  279  sudo systemctl stop apache2
+  280  sudo systemctl disable apache2
+  281  sudo apt purge apache2 apache2-utils apache2-bin apache2-data
+  282  sudo apt autoremove
+  283  sudo kill 1775 1774 1772
+  284  docker compose up
+  285  sudo docker ps
+  286  docker compose up
+  287  docker compose up -d
+  288  docker compose up 
+  289  sudo apt update
+  290  sudo apt install -y build-essential dkms linux-headers-$(uname -r)
+  291  sudo apt update
+  292  sudo apt install -y virtualbox-guest-dkms virtualbox-guest-utils virtualbox-guest-x11
+  293  sudo mkdir -p /mnt/cdrom
+  294  sudo mount /dev/cdrom /mnt/cdrom
+  295  sudo /mnt/cdrom/VBoxLinuxAdditions.run
+  296  which VBoxControl && VBoxControl --version
+  297  lsmod | grep -E 'vboxguest|vboxvideo'
+  298  ps aux | grep -v grep | grep VBoxClient
+  299  # install the Ubuntu‐packaged guest utils (they include the client)
+  300  sudo apt update
+  301  sudo apt install -y virtualbox-guest-utils
+  302  # start the display client now
+  303  VBoxClient --display &
+  304  # enable the vbox service in case it isn’t
+  305  sudo systemctl enable --now vboxservice
+  306  sudo apt update
+  307  sudo apt install -y virtualbox-guest-x11
+  308  VBoxClient-all &
+  309  ps aux | grep -v grep | grep VBoxClient
+  310  sudo apt update
+  311  sudo apt install -y xserver-xorg-video-vboxvideo
+  312  sudo mkdir -p /mnt/cdrom
+  313  sudo mount /dev/cdrom /mnt/cdrom
+  314  sudo /mnt/cdrom/VBoxLinuxAdditions.run
+  315  do reboot
+  316  sudo reboot
+  317  ps aux | grep -v grep | grep VBoxClient
+  318  sudo apt update
+  319  sudo apt install -y build-essential dkms linux-headers-$(uname -r)   xserver-xorg-dev libxcb1-dev libxrandr-dev libxinerama-dev
+  320  sudo mount /dev/cdrom /mnt
+  321  sudo /mnt/VBoxLinuxAdditions.run
+  322  sudo reboot
+  323  sudo apt update
+  324  sudo apt install -y build-essential dkms linux-headers-$(uname -r)   xserver-xorg-dev libxcb1-dev libxrandr-dev libxinerama-dev libxi-dev
+  325  sudo apt update
+  326  sudo apt install -y build-essential dkms linux-headers-$(uname -r)   xserver-xorg-dev libxcb1-dev libxrandr-dev libxinerama-dev libxi-dev
+  327  sudo mkdir -p /mnt/cdrom
+  328  sudo mount /dev/cdrom /mnt/cdrom
+  329  sudo /mnt/cdrom/VBoxLinuxAdditions.run
+  330  cd var
+  331  cd /var/log
+  332  ls -l vboxadd-setup.log
+  333  sudo tail -n 100 vboxadd-setup.log
+  334  sudo apt update
+  335  sudo apt install -y build-essential dkms linux-headers-$(uname -r)     xserver-xorg-dev libxrandr-dev libxinerama-dev libxi-dev
+  336  sudo mkdir -p /mnt/cdrom
+  337  sudo mount /dev/cdrom /mnt/cdrom
+  338  sudo /mnt/cdrom/VBoxLinuxAdditions.run --nox11
+  339  ps aux | grep -E 'VBoxClient.*clipboard'
+  340  sudo reboot
+  341  lsmod | grep -E 'vboxguest'
+  342  lsmod | grep -E 'vboxguest|vboxvideo|vboxsf'
+  343  lsmod | grep -E 'vboxcl'
+  344  lsmod | grep -E 'vboxclient'
+  345  lsmod | grep -E 'VBoxClient'
+  346  lsmod | grep -E 'vboxguest|vboxvideo|vboxsf'
+  347  sudo modprobe vboxvideo
+  348  lsmod | grep vboxvideo
+  349  lsmod | grep -E 'vboxguest|vboxvideo|vboxsf'
+  350  pkill -f 'VBoxClient --display'  
+  351  VBoxClient --display &
+  352  ps aux | grep -v grep | grep VBoxClient
+  353  cd Desktop
+  354  cd IDS-testbed/
+  355  docker compose up
+  356  cd Desktop/IDS-testbed/
+  357  docker compose down
+  358  docker compose up
+  359  cd MhtrooApi/
+  360  node server.js
+  361  systemctl enable mongodb.service
+  362  sudo systemctl start mongod
+  363  node server.js
+  364  cd Deskt
+  365  cd Desktop/
+  366  cd IDS-testbed/
+  367  docker compose down -v
+  368  docker compose up
+  369  clr
+  370  clear
+  371  docker compose up
+  372  docker-compose down -v --remove-orphans
+  373  docker compose down -v --remove-orphans
+  374  docker ps -a
+  375  docker compose up
+  376  docker compose down -v
+  377  cd Desktop
+  378  cd IDS-testbed/
+  379  cd Desktop/IDS-testbed/
+  380  docker compose exec connectorb sh
+  381  docker compose exec connectorb bash
+  382  docker compose exec connectorb ash
+  383  docker compose exec connectorb ls /bin
+  384  # figure out your compose network (usually <folder>_default)
+  385  NETWORK=$(docker network ls \
+  386    | awk '/ids-testbed_default/ {print $2}')
+  387  docker run --rm   --network "$NETWORK"   curlimages/curl:latest     -k -u "$ADMIN_USERNAME:$ADMIN_PASSWORD"     "https://connectormhtroo:8082/api/catalogs/9b85df4a-0a61-4dd7-842c-773db4ecffb7?expand=offers"
+  388  NETWORK=ids-testbed_default
+  389  docker run --rm   --network "$NETWORK"   curlimages/curl:latest     -k     -u admin:password     "https://connectormhtroo:8082/api/catalogs/9b85df4a-0a61-4dd7-842c-773db4ecffb7?expand=offers"
+  390  docker run --rm   --network container:<connectorb>   curlimages/curl:latest   -k   -u admin:password   "https://connectormhtroo:8082/api/catalogs/9b85df4a-0a61-4dd7-842c-773db4ecffb7?expand=offers"
+  391  docker run --rm   --network container:<connectorb_name_or_id>   curlimages/curl:latest   -k   -u admin:password   "https://connectormhtroo:8082/api/catalogs/9b85df4a-0a61-4dd7-842c-773db4ecffb7?expand=offers"
+  392  docker ps
+  393  docker run --rm   --network container:connectorb   curlimages/curl:latest     -k     -u admin:password     "https://connectormhtroo:8082/api/catalogs/9b85df4a-0a61-4dd7-842c-773db4ecffb7?expand=offers"
+  394  cd Desktop/IDS-testbed/
+  395  docker compose up
+  396  docker compose down -v
+  397  docker compose up
+  398  docker compose down -v
+  399  docker compose up
+  400  docker compose down
+  401  docker compose down -v
+  402  docker compose up
+  403  ls
+  404  cd ConfigureConnector/
+  405  clr
+  406  clear
+  407  node app.js
+  408  clear
+  409  node app.js
+  410  source /home/kostas/Desktop/IDS-testbed/venv/bin/activate
+  411  history > history_for_print.txt

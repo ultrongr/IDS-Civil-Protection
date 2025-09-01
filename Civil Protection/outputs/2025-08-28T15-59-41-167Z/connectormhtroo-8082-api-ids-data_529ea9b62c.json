@@ -1,0 +1,19 @@
+{
+  "type": "secured-config",
+  "version": 1,
+  "endpoint": "http://localhost:8090/api/ids/data",
+  "auth": {
+    "scheme": "Bearer",
+    "token": "0XGLboTbLsPrRkEqUz7i3sbHuhbKcTcwp8JxitU7bFPJAf4JwpTl9j1wbmrPF0Eg"
+  },
+  "crypto": {
+    "alg": "AES-256-GCM",
+    "secret": "dAjjsdaIsd!123",
+    "encoding": "utf8"
+  },
+  "meta": {
+    "service": "amea",
+    "issuedAt": "2025-08-28T15:16:01.866Z",
+    "note": "Confidential. Do not log/store in plaintext."
+  }
+}

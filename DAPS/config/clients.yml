@@ -53,3 +53,75 @@
     value: https://w3id.org/idsa/contexts/context.jsonld
   - key: transportCertsSha256
     value: 31741d12bd09dff4d0beb31b6d42811788e4d8954910a985d70d3127630a188d
+- client_id: 6B:97:E6:16:AD:4D:F8:15:62:D1:0D:A1:70:CC:FF:66:45:0B:A6:6C:keyid:C4:76:D0:AA:CD:93:79:35:0F:EB:A7:64:60:90:A4:6B:B4:38:4D:33
+  client_name: connectorMhtroo
+  grant_types: client_credentials
+  token_endpoint_auth_method: private_key_jwt
+  scope: idsc:IDS_CONNECTOR_ATTRIBUTES_ALL
+  attributes:
+  - key: idsc
+    value: IDS_CONNECTOR_ATTRIBUTES_ALL
+  - key: securityProfile
+    value: idsc:BASE_SECURITY_PROFILE
+  - key: referringConnector
+    value: http://connectorMhtroo.demo
+  - key: "@type"
+    value: ids:DatPayload
+  - key: "@context"
+    value: https://w3id.org/idsa/contexts/context.jsonld
+  - key: transportCertsSha256
+    value: 376a206892492b4ea4632f5570d2e885956ebd676b273afa8698e9a67977dd51
+- client_id: F3:53:5B:30:7C:3C:9B:98:68:83:10:18:E1:15:E5:EC:03:29:00:76:keyid:C4:76:D0:AA:CD:93:79:35:0F:EB:A7:64:60:90:A4:6B:B4:38:4D:33
+  client_name: connectorAmeaclub
+  grant_types: client_credentials
+  token_endpoint_auth_method: private_key_jwt
+  scope: idsc:IDS_CONNECTOR_ATTRIBUTES_ALL
+  attributes:
+  - key: idsc
+    value: IDS_CONNECTOR_ATTRIBUTES_ALL
+  - key: securityProfile
+    value: idsc:BASE_SECURITY_PROFILE
+  - key: referringConnector
+    value: http://connectorAmeaclub.demo
+  - key: "@type"
+    value: ids:DatPayload
+  - key: "@context"
+    value: https://w3id.org/idsa/contexts/context.jsonld
+  - key: transportCertsSha256
+    value: c1b50bf0abb2b2183e79e7c602c0319e6d4d24753e844548e5af3467ac118376
+- client_id: 10:17:03:AC:A5:41:8D:D1:3F:FD:4F:EE:85:D9:EB:CC:5B:4A:70:F8:keyid:19:A0:3E:93:17:75:B1:DE:BF:3F:B2:29:F2:FB:02:59:3E:CA:6E:2D
+  client_name: connectorNaturaldisaster
+  grant_types: client_credentials
+  token_endpoint_auth_method: private_key_jwt
+  scope: idsc:IDS_CONNECTOR_ATTRIBUTES_ALL
+  attributes:
+  - key: idsc
+    value: IDS_CONNECTOR_ATTRIBUTES_ALL
+  - key: securityProfile
+    value: idsc:BASE_SECURITY_PROFILE
+  - key: referringConnector
+    value: http://connectorNaturaldisaster.demo
+  - key: "@type"
+    value: ids:DatPayload
+  - key: "@context"
+    value: https://w3id.org/idsa/contexts/context.jsonld
+  - key: transportCertsSha256
+    value: f45cd41d11f62382e63f1242e430ceaaeba42121f65d630e277bc9270a851072
+- client_id: 1F:B8:FE:9F:E9:19:AB:BF:D4:CA:8D:88:21:19:84:A5:21:AA:7E:9C:keyid:19:A0:3E:93:17:75:B1:DE:BF:3F:B2:29:F2:FB:02:59:3E:CA:6E:2D
+  client_name: connectorCivilservice
+  grant_types: client_credentials
+  token_endpoint_auth_method: private_key_jwt
+  scope: idsc:IDS_CONNECTOR_ATTRIBUTES_ALL
+  attributes:
+  - key: idsc
+    value: IDS_CONNECTOR_ATTRIBUTES_ALL
+  - key: securityProfile
+    value: idsc:BASE_SECURITY_PROFILE
+  - key: referringConnector
+    value: http://connectorCivilservice.demo
+  - key: "@type"
+    value: ids:DatPayload
+  - key: "@context"
+    value: https://w3id.org/idsa/contexts/context.jsonld
+  - key: transportCertsSha256
+    value: a8a633694abdb2fccaefb5a970024ee2d21c61ca0d4922bd9fb1d2d67f751b1b

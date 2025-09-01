@@ -1,0 +1,21 @@
+{
+  "@context": "https://w3id.org/idsa/context.jsonld",
+  "@id": "https://connector-amea.local",
+  "@type": "ids:BaseConnector",
+  "ids:maintainer": {
+    "@id": "https://connector-amea.local/owner"
+  },
+  "ids:curator": {
+    "@id": "https://connector-amea.local/curator"
+  },
+  "ids:securityProfile": {
+    "@id": "https://w3id.org/idsa/code/BASE_SECURITY_PROFILE"
+  },
+  "ids:hasDefaultEndpoint": {
+    "@type": "ids:ConnectorEndpoint",
+    "ids:accessURL": {
+      "@id": "https://localhost:8443"
+    }
+  },
+  "ids:resourceCatalog": []
+}

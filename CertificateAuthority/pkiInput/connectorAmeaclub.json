@@ -1,0 +1,12 @@
+{
+  "CN": "Connector Ameaclub",
+  "key": { "algo": "rsa", "size": 2048 },
+  "names": [
+    { "C": "GR", "L": "Patras", "O": "UP", "OU": "University of Patras" }
+  ],
+  "hosts": [
+    "localhost",
+    "connectorameaclub",
+    "127.0.0.1"
+  ]
+}

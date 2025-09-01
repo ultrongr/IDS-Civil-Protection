@@ -1,0 +1,11 @@
+{
+  "backend": "fiware-ngsi-v2",
+  "orionBase": "http://150.140.186.118:1026",
+  "servicePath": "/up1083865/thesis/Vehicles",
+  "service": null,
+  "resourceType": "Vehicle",
+  "options": "keyValues",
+  "requiredHeaders": {
+    "Fiware-ServicePath": "/up1083865/thesis/Vehicles"
+  }
+}

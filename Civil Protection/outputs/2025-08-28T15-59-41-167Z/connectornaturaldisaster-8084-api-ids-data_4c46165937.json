@@ -1,0 +1,31 @@
+{
+  "type": "open-data-endpoint",
+  "version": 1,
+  "dataset": "naturaldisaster-112",
+  "endpoint": {
+    "url": "http://localhost:8092/api/ids/data",
+    "method": "GET",
+    "headers": {},
+    "query": {},
+    "pagination": {
+      "type": "none"
+    },
+    "response": {
+      "mediaType": "application/json",
+      "encoding": "utf8"
+    }
+  },
+  "semantics": {
+    "entityType": "NaturalDisaster",
+    "language": "en",
+    "keywords": [
+      "NATURALDISASTER",
+      "112",
+      "alerts",
+      "incidents"
+    ],
+    "fields": []
+  },
+  "documentation": "http://localhost:8092/docs",
+  "notes": "No auth required. This artifact delivers a formalized endpoint description, not a secret-bearing config."
+}

@@ -1,0 +1,69 @@
+{
+  "connector": {
+    "title": "Connector Ameaclub",
+    "description": "Connector with static example resources",
+    "curator": "https://sovity.de/",
+    "maintainer": "https://sovity.de/",
+    "securityProfile": "BASE_SECURITY_PROFILE",
+    "version": "1.0.0",
+    "modelVersion": "4.2.7",
+    "inboundModelVersion": ["4.2.7"]
+  },
+  "default": {
+    "agreementValidity": 60,
+
+
+    "target": "http://localhost:8091/api/ids/data"
+  },
+
+  "@context": {
+    "ids": "https://w3id.org/idsa/core/",
+    "idsc": "https://w3id.org/idsa/code/"
+  },
+  "@type": "ids:ConfigurationModel",
+  "@id": "https://w3id.org/idsa/autogen/configurationModel/7672b568-7878-4f62-8032-5c73de969414",
+
+  "ids:configurationModelLogLevel": { "@id": "idsc:MINIMAL_LOGGING" },
+  "ids:connectorDeployMode":       { "@id": "idsc:PRODUCTIVE_DEPLOYMENT" },
+
+  "ids:connectorDescription": {
+    "@type": "ids:BaseConnector",
+    "@id": "https://connector_Ameaclub",
+
+    "ids:publicKey": {
+      "@type": "ids:PublicKey",
+      "@id": "https://w3id.org/idsa/autogen/publicKey/7672b568-7878-4f62-8032-5c73de969414",
+      "ids:keyType": { "@id": "idsc:RSA" },
+      "ids:keyValue": "<paste the Base64 DER of your Ameaclub public key here>"
+    },
+
+    "ids:description": [
+      { "@value": "IDS Connector Ameaclub with static example resources",
+        "@type": "http://www.w3.org/2001/XMLSchema#string" }
+    ],
+    "ids:version": "1.0.0",
+
+
+    "ids:hasDefaultEndpoint": {
+      "@type": "ids:ConnectorEndpoint",
+      "@id": "https://w3id.org/idsa/autogen/connectorEndpoint/7672b568-7878-4f62-8032-5c73de969414",
+      "ids:accessURL": { "@id": "https://connectorameaclub:8083/api/ids/data" }
+    },
+
+    "ids:outboundModelVersion": "4.2.7",
+    "ids:inboundModelVersion":  [
+      "4.0.0","4.1.0","4.1.2","4.2.0","4.2.1","4.2.2","4.2.3","4.2.4","4.2.5","4.2.6","4.2.7"
+    ],
+    "ids:title": [
+      { "@value": "Dataspace Connector", "@type": "http://www.w3.org/2001/XMLSchema#string" }
+    ],
+    "ids:securityProfile": { "@id": "idsc:BASE_SECURITY_PROFILE" },
+    "ids:curator":   { "@id": "https://sovity.de/" },
+    "ids:maintainer":{ "@id": "https://sovity.de/" }
+  },
+
+  "ids:trustStore": { "@id": "file:///config/truststore.p12" },
+  "ids:keyStore":   { "@id": "file:///conf/connectorAmeaclub.p12" },
+
+  "ids:connectorStatus": { "@id": "idsc:CONNECTOR_ONLINE" }
+}

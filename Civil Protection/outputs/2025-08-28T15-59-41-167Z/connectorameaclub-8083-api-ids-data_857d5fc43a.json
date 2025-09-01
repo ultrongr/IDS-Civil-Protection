@@ -1,0 +1,19 @@
+{
+  "type": "secured-config",
+  "version": 1,
+  "endpoint": "http://localhost:8091/api/ameaclub/members",
+  "auth": {
+    "scheme": "Bearer",
+    "token": "TRj73hG32LdPOOlvOQorGf2wWiwhPPaQ6VBZqIIf8c4j202WLXECIUD3DkkrEQEU"
+  },
+  "crypto": {
+    "alg": "AES-256-GCM",
+    "secret": "hghenhutu@URu4",
+    "encoding": "utf8"
+  },
+  "meta": {
+    "service": "ameaclub",
+    "issuedAt": "2025-08-28T15:15:06.346Z",
+    "note": "Confidential. Do not log/store in plaintext."
+  }
+}

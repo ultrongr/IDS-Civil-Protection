@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Emergency Map — AMEA + Fleet + Disasters</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <style>
+    html, body, #map { height: 100%; margin: 0; }
+    .legend { background: #fff; padding: 8px 10px; line-height: 1.2; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+    .legend .dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; }
+
+    .leaflet-control.custom-btns { background: #fff; padding: 6px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,.3); }
+    .leaflet-control.custom-btns button { display:block; width: 160px; margin: 4px 0; padding: 6px 8px; font: 12px/14px system-ui, Arial, sans-serif; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; }
+    .leaflet-control.custom-btns button:hover { background:#f6f6f6; }
+
+    .pickup-label {
+      color: #fff; border-radius: 12px; padding: 2px 6px; font: 11px/13px system-ui, Arial, sans-serif;
+      border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.35);
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+          crossorigin=""></script>
+  <script>
+    // Map (SVG renderer; keep default)
+    const map = L.map('map').setView([38.0, 23.7], 7);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(map);
+
+    // Panes for z-order
+    map.createPane('pane-disasters');  map.getPane('pane-disasters').style.zIndex = 420;
+    map.createPane('pane-amea');       map.getPane('pane-amea').style.zIndex      = 450;
+    map.createPane('pane-fleet');      map.getPane('pane-fleet').style.zIndex     = 460;
+    map.createPane('pane-routes');     map.getPane('pane-routes').style.zIndex    = 470;
+
+    function circle(color) {
+      return { radius: 6, weight: 1, opacity: 1, fillOpacity: 0.9, color: '#222', fillColor: color };
+    }
+    function dangerColor(lvl) {
+      const t = String(lvl || '').toLowerCase();
+      if (t.includes('extreme')) return '#e74c3c';
+      if (t.includes('high'))    return '#e67e22';
+      if (t.includes('moderate'))return '#f1c40f';
+      if (t.includes('low'))     return '#2ecc71';
+      return '#3498db';
+    }
+    // Deterministic "random" color per vehicle
+    function colorForKey(key = '') {
+      let h = 0 >>> 0;
+      for (let i = 0; i < key.length; i++) h = (h * 2654435761 + key.charCodeAt(i)) >>> 0;
+      const hue = h % 360;
+      return `hsl(${hue}, 78%, 45%)`;
+    }
+
+    const layers = {
+      disasters: L.layerGroup([], { pane: 'pane-disasters' }).addTo(map),
+      amea:      L.layerGroup([], { pane: 'pane-amea'      }).addTo(map),
+      fleet:     L.layerGroup([], { pane: 'pane-fleet'     }).addTo(map),
+      routes:    L.layerGroup([], { pane: 'pane-routes'    }).addTo(map),
+    };
+
+    let didInitialFit = false;
+    let lastBounds = L.latLngBounds([]);
+
+    function renderPopup(kind, p) {
+      if (kind === 'fleet') {
+        return `<b>Vehicle</b><br/>ID: ${esc(p.id)}<br/>Plate: ${esc(p.license_plate)}<br/>Status: ${esc(p.status)}<br/>Speed: ${esc(String(p.speed))}`;
+      }
+      if (kind === 'amea') {
+        return `<b>AMEA</b><br/>${esc(p.name || 'Unknown')}<br/>Disability %: ${esc(String(p.disabilityPct ?? '-'))}<br/>Phone: ${esc(p.phone ?? '-')}` +
+               `<br/>Email: ${esc(p.email ?? '-')}`;
+      }
+      const dt = v => (v ? new Date(v).toLocaleString('el-GR') : '—');
+      return `<b>Disaster</b><br/>Type: ${esc(p.type || 'event')}<br/>Danger: ${esc(p.dangerLevel || p.severity || '-')}` +
+             `<br/>Start: ${esc(dt(p.startDate || p.startedAt || p.timestamp))}<br/>End: ${esc(dt(p.endDate))}<br/>Source: ${esc(p.source || '-')}`;
+    }
+    function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+    function addFeatureCollection(fc, kind) {
+      if (!fc) return;
+
+      if (kind === 'disasters') {
+        if (fc.type === 'FeatureCollection' && Array.isArray(fc.features)) {
+          const polyLayer = L.geoJSON(fc, {
+            pane: 'pane-disasters',
+            interactive: true,
+            style: (feature) => {
+              const lvl = feature?.properties?.dangerLevel || feature?.properties?.severity || 'moderate';
+              const color = dangerColor(lvl);
+              return { weight: 2, opacity: 1, color, fillOpacity: 0.25, fillColor: color };
+            },
+            onEachFeature: (feature, layer) => layer.bindPopup(renderPopup('disasters', feature.properties || {}))
+          });
+          layers.disasters.addLayer(polyLayer);
+          try { lastBounds.extend(polyLayer.getBounds()); } catch {}
+        }
+        return;
+      }
+
+      if (!Array.isArray(fc.features)) return;
+      const color = (kind === 'fleet') ? '#2b8eff' : '#a12bff';
+      const paneName = (kind === 'fleet') ? 'pane-fleet' : 'pane-amea';
+
+      for (const f of fc.features) {
+        const c = f.geometry?.coordinates;
+        if (!c || c.length !== 2) continue;
+        const latlng = L.latLng(c[1], c[0]);
+        const props = f.properties || {};
+        const marker = L.circleMarker(latlng, { ...circle(color), pane: paneName })
+          .bindPopup(renderPopup(kind, props));
+        layers[kind].addLayer(marker);
+        lastBounds.extend(latlng);
+      }
+    }
+
+    async function refreshAll() {
+      try {
+        const ts = Date.now();
+        const [disR, ameaR, fleetR] = await Promise.all([
+          fetch('/api/disasters?active=true&ts=' + ts, { cache: 'no-store' }),
+          fetch('/api/amea?ts=' + ts,                 { cache: 'no-store' }),
+          fetch('/api/fleet?ts=' + ts,                { cache: 'no-store' }),
+        ]);
+        const [disasters, amea, fleet] = await Promise.all([disR.json(), ameaR.json(), fleetR.json()]);
+
+        layers.disasters.clearLayers();
+        layers.amea.clearLayers();
+        layers.fleet.clearLayers();
+
+        lastBounds = L.latLngBounds([]);
+
+        addFeatureCollection(disasters, 'disasters');
+        addFeatureCollection(amea,      'amea');
+        addFeatureCollection(fleet,     'fleet');
+
+        if (!didInitialFit && lastBounds.isValid()) {
+          map.fitBounds(lastBounds.pad(0.1));
+          didInitialFit = true;
+        }
+      } catch (e) {
+        console.error('Failed to refresh layers', e);
+      }
+    }
+
+    // --- Routes drawing ---
+    function clearRoutes() {
+      layers.routes.clearLayers();
+    }
+    function drawRoutes(fc) {
+      clearRoutes();
+      if (!fc || !Array.isArray(fc.features)) return;
+
+      const routeLayer = L.geoJSON(fc, {
+        pane: 'pane-routes',
+        style: (f) => {
+          if (f.properties?.kind !== 'route') return undefined;
+          const p = f.properties;
+          const color = colorForKey(String(p.license_plate || p.vehicleId || ''));
+          return { color, weight: 7, opacity: 0.95 };
+        },
+        pointToLayer: (f, latlng) => {
+          const p = f.properties || {};
+          if (p.kind === 'pickup') {
+            const color = colorForKey(String(p.license_plate || p.vehicleId || ''));
+            const html = `<div class="pickup-label" style="background:${color}">${p.seq ?? ''}</div>`;
+            return L.marker(latlng, {
+              pane: 'pane-routes',
+              icon: L.divIcon({ className: '', html, iconSize: [24, 24], iconAnchor: [12, 12] })
+            });
+          }
+          return L.circleMarker(latlng, { ...circle('#000'), pane: 'pane-routes' });
+        },
+        onEachFeature: (feature, layer) => {
+          if (feature.properties?.kind === 'route') {
+            const p = feature.properties;
+            layer.bindPopup(
+              `<b>Route</b> — Vehicle: ${esc(p.license_plate || p.vehicleId)}<br/>` +
+              `Stops: ${esc(p.assigned ?? 0)}<br/>Distance: ${esc(p.distanceKm ?? '-') } km`
+            );
+          } else if (feature.properties?.kind === 'pickup') {
+            const p = feature.properties;
+            layer.bindPopup(
+              `<b>Pickup #${esc(p.seq)}</b><br/>Vehicle: ${esc(p.license_plate || p.vehicleId)}<br/>` +
+              `Name: ${esc(p.name || 'AMEA')}`
+            );
+          }
+        }
+      });
+      layers.routes.addLayer(routeLayer);
+
+      try {
+        const b = routeLayer.getBounds();
+        if (b.isValid()) map.fitBounds(b.pad(0.2));
+      } catch {}
+    }
+
+    async function planRoutes() {
+      try {
+        const r = await fetch('/api/plan-routes', { method: 'POST' });
+        const fc = await r.json();
+        drawRoutes(fc);
+        if (fc?.meta) console.log('Route meta:', fc.meta);
+      } catch (e) {
+        console.error('Plan routes failed', e);
+      }
+    }
+
+    // --- UI: legend + buttons ---
+    const legend = L.control({position:'topright'});
+    legend.onAdd = function() {
+      const div = L.DomUtil.create('div', 'legend');
+      div.innerHTML = `
+        <div><span class="dot" style="background:#ff3b30"></span> Disasters</div>
+        <div><span class="dot" style="background:#a12bff"></span> AMEA</div>
+        <div><span class="dot" style="background:#2b8eff"></span> Fleet</div>`;
+      return div;
+    };
+    legend.addTo(map);
+
+    const Buttons = L.Control.extend({
+      onAdd: function() {
+        const div = L.DomUtil.create('div', 'leaflet-control custom-btns');
+        const plan = L.DomUtil.create('button', '', div);
+        plan.textContent = 'Plan pickups';
+        plan.onclick = (e) => { e.preventDefault(); planRoutes(); };
+
+        const clr = L.DomUtil.create('button', '', div);
+        clr.textContent = 'Clear routes';
+        clr.onclick = (e) => { e.preventDefault(); clearRoutes(); };
+
+        // stop map drags when clicking
+        L.DomEvent.disableClickPropagation(div);
+        return div;
+      },
+      onRemove: function() {}
+    });
+    (new Buttons({ position: 'topleft' })).addTo(map);
+
+    // Initial load + poll every 5s
+    refreshAll();
+    setInterval(refreshAll, 5000);
+  </script>
+</body>
+</html>

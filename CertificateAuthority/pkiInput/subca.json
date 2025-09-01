@@ -11,5 +11,11 @@
     "O": "IDSA",
     "OU": "IDS Reference Testbed"
   }
- ]
+ ],
+   "signing": {
+    "default": {
+      "expiry": "8760h",
+      "usages": ["digital signature", "key encipherment", "server auth"]
+    }
+  }
 }
