@@ -25,6 +25,15 @@ const FIWARE_SERVICE_PATH   = process.env.FIWARE_SERVICE_PATH || '/up1083865/the
 const FIWARE_SERVICE_TENANT = process.env.FIWARE_SERVICE_TENANT || undefined;
 const BASE_ENTITY_ID_PREFIX = process.env.BASE_ENTITY_ID_PREFIX || 'urn:ngsi-ld:Vehicle:CIV';
 
+// --- City partitioning ---
+const CITY_CENTERS = {
+  Athens:        [23.7348, 37.9755],
+  Thessaloniki:  [22.9444, 40.6401],
+  Patras:        [21.7346, 38.2466],
+};
+const CITY_RADIUS_KM = Number(process.env.CITY_RADIUS_KM || 90); // targets within 40km of city center
+
+
 // Basic Auth for the whole app
 const BASIC_USER       = (process.env.BASIC_USER || '').trim();
 const BASIC_PASS       = process.env.BASIC_PASS;          // plain (optional)
@@ -91,6 +100,30 @@ function classifyService(cfg) {
 
   return 'other';
 }
+
+// OSRM duration matrix between origin(s) and destination(s)
+async function osrmTable(origins, destinations) {
+  if (!Array.isArray(origins) || !origins.length || !Array.isArray(destinations) || !destinations.length) return null;
+
+  const coords = [...origins, ...destinations];
+  const locStr = coords.map(([lon, lat]) => `${lon.toFixed(6)},${lat.toFixed(6)}`).join(';');
+
+  const sources       = origins.map((_, i) => i).join(';');                 // 0..M-1
+  const destStart     = origins.length;
+  const destinationsQ = destinations.map((_, i) => i + destStart).join(';');// M..M+N-1
+
+  const url = `${ROUTING_BASE}/table/v1/driving/${locStr}?annotations=duration&sources=${sources}&destinations=${destinationsQ}`;
+  try {
+    const r = await axios.get(encodeURI(url), { timeout: 15000 });
+    const { durations } = r.data || {};
+    if (!durations || !durations.length) return null;
+    return { durations };
+  } catch (e) {
+    console.warn('OSRM table failed:', e.response?.status || e.message);
+    return null;
+  }
+}
+
 
 async function osrmRoute(coords) {
   // coords: [[lon,lat], [lon,lat], ...] in the *final visiting order*
@@ -532,6 +565,17 @@ function haversineKm([lon1, lat1], [lon2, lat2]) {
   return 2 * R * Math.asin(Math.sqrt(a));
 }
 
+
+function nearestCityForCoord([lon, lat]) {
+  let bestCity = null, bestD = Infinity;
+  for (const [city, center] of Object.entries(CITY_CENTERS)) {
+    const d = haversineKm(center, [lon, lat]); // haversineKm expects [lon,lat]
+    if (d < bestD) { bestD = d; bestCity = city; }
+  }
+  return bestD <= CITY_RADIUS_KM ? bestCity : null;
+}
+
+
 // nearest-neighbor path starting at startCoord over array of stops [{id, name, coord:[lon,lat]}]
 function nearestNeighborRoute(startCoord, stops) {
   const remaining = stops.slice();
@@ -610,13 +654,20 @@ async function loadFleetFeatures() {
   for (const e of entities) {
     const coords = Array.isArray(e?.location?.coordinates) ? e.location.coordinates : null;
     if (!coords || coords.length !== 2) continue;
+    const totalSeats    = Number(e.totalSeats ?? 0);
+    const occupiedSeats = Number(e.occupiedSeats ?? e.crew ?? 0);
+    const availableSeats = Math.max(0, totalSeats - occupiedSeats);
+
     features.push({
       type: 'Feature',
       geometry: { type: 'Point', coordinates: coords },
       properties: {
         id: e.id,
         license_plate: e.license_plate ?? '-',
-        type: e.vehicleType ?? 'unknown'
+        type: e.vehicleType ?? 'unknown',
+        totalSeats,
+        occupiedSeats,
+        availableSeats
       }
     });
   }
@@ -705,27 +756,77 @@ app.post('/api/plan-routes', async (_req, res) => {
         meta: { vehicles: fleet.length, targets: 0, activeDisasters: geoms.length }
       });
     }
-
-    // 2) Assign each target to nearest vehicle (by crow-flies distance)
-    const vehicles = fleet.map(v => ({
-      id: v.properties.id,
-      plate: v.properties.license_plate,
-      start: v.geometry.coordinates,   // [lon, lat]
-      picks: []
-    }));
-
-    for (const t of targets) {
-      let bestIdx = 0, bestD = Infinity;
-      for (let i = 0; i < vehicles.length; i++) {
-        const d = haversineKm(vehicles[i].start, t.coord);
-        if (d < bestD) { bestD = d; bestIdx = i; }
-      }
-      vehicles[bestIdx].picks.push(t);
+    console.log("Targets: " + targets.length);
+    // 2) Vehicles with capacity (ad hoc city via nearest center)
+    console.log(fleet[0], fleet[1])
+    const vehiclesAll = fleet.map(v => ({
+    id: v.properties.id,
+    plate: v.properties.license_plate,
+    start: v.geometry.coordinates,                 // [lon, lat]
+    seatsLeft: Number(v.properties.availableSeats ?? 0),
+    city: nearestCityForCoord(v.geometry.coordinates),
+    picks: []
+    })).filter(v => v.seatsLeft > 0);
+    console.log(vehiclesAll[0])
+    const totalFree = vehiclesAll.reduce((s,v)=>s+v.seatsLeft,0);
+    if (!totalFree) {
+    return res.json({
+        type: 'FeatureCollection',
+        features: [],
+        meta: { vehicles: fleet.length, targets: targets.length, activeDisasters: geoms.length, reason: 'no_capacity' }
+    });
     }
+    console.log("2a) Vehicles: " + vehiclesAll.length);
+    // 2a) Group vehicles and targets by city (Athens/Thessaloniki/Patras)
+    const cityNames = Object.keys(CITY_CENTERS);
+    const cityVehicles = Object.fromEntries(cityNames.map(c => [c, []]));
+    for (const v of vehiclesAll) cityVehicles[v.city].push(v);
+
+    const cityTargets = Object.fromEntries(cityNames.map(c => [c, []]));
+    for (const t of targets) {
+    const c = nearestCityForCoord(t.coord);
+    cityTargets[c].push(t);
+    }
+
+    // 2b) Per-city greedy assignment using OSRM durations (smaller matrices)
+    for (const city of cityNames) {
+    const vList = cityVehicles[city];
+    const tList = cityTargets[city];
+    if (!vList?.length || !tList?.length) continue;
+
+    const table = await osrmTable(
+        vList.map(v => v.start),
+        tList.map(t => t.coord)
+    );
+    const durations = table?.durations; // shape: vList x tList
+
+    const unassigned = new Set(tList.map((_, i) => i));
+    while (unassigned.size && vList.some(v => v.seatsLeft > 0)) {
+        let bestVI = -1, bestTI = -1, bestScore = Infinity;
+        for (let vi = 0; vi < vList.length; vi++) {
+        if (vList[vi].seatsLeft <= 0) continue;
+        for (const ti of unassigned) {
+            let score;
+            if (durations && durations[vi] && Number.isFinite(durations[vi][ti])) {
+            score = durations[vi][ti]; // seconds
+            } else {
+            score = haversineKm(vList[vi].start, tList[ti].coord); // fallback
+            }
+            if (score < bestScore) { bestScore = score; bestVI = vi; bestTI = ti; }
+        }
+        }
+        if (bestVI === -1) break;
+        vList[bestVI].picks.push(tList[bestTI]);
+        vList[bestVI].seatsLeft -= 1;
+        unassigned.delete(bestTI);
+    }
+    }
+    console.log(`Greedy planning (per-city nearest-center) took ${Date.now() - time1} ms`);
+
 
     // 3) Build a route per vehicle using nearest-neighbor order, then OSRM route
     const features = [];
-    for (const v of vehicles) {
+    for (const v of vehiclesAll) {
       if (!v.picks.length) continue;
 
       const order = nearestNeighborRoute(v.start, v.picks);         // returns [{coord, name, ...}, ...]
@@ -757,7 +858,10 @@ app.post('/api/plan-routes', async (_req, res) => {
           kind: 'route',
           vehicleId: v.id,
           license_plate: v.plate,
+          city: v.city,
           assigned: order.length,
+          capacityUsed: order.length,
+          capacityTotal: v.seatsLeft,
           distanceKm,
           durationMin
         }
@@ -772,6 +876,7 @@ app.post('/api/plan-routes', async (_req, res) => {
             kind: 'pickup',
             vehicleId: v.id,
             license_plate: v.plate,
+            city: v.city,
             seq: idx + 1,
             name: o.name
           }
