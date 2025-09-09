@@ -18,6 +18,7 @@ body { margin: 0; background: var(--bg); color: var(--fg); font-family: ui-sans-
 #map { height: calc(100vh - 78px); width: 100vw; }
 
 .leaflet-container { background: #0d1328; }
+.leaflet-div-icon { background: transparent; border: none; }
 
 .popup { min-width: 220px; }
 .popup .title { font-weight: 600; margin-bottom: 4px; }
