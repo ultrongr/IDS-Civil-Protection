@@ -19,23 +19,25 @@
     .leaflet-control.custom-btns button { display:block; width: 160px; margin: 4px 0; padding: 6px 8px; font: 12px/14px system-ui, Arial, sans-serif; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; }
     .leaflet-control.custom-btns button:hover { background:#f6f6f6; }
 
+    /* Vehicles list (inside the same control) */
+    .veh-wrap { margin-top: 6px; }
+    .veh-wrap details { border: 1px solid #e6e6e6; border-radius: 6px; padding: 4px 6px; }
+    .veh-wrap summary { cursor: pointer; font: 12px/14px system-ui, Arial, sans-serif; user-select: none; }
+    .veh-tools { display:flex; gap:6px; margin:6px 0 4px; }
+    .veh-tools button { flex:1; font-size: 11px; padding: 4px 6px; }
+    .veh-list { max-height: 180px; overflow: auto; padding-right: 4px; }
+    .veh-item { display:flex; align-items:center; gap:6px; padding: 3px 2px; font: 12px/14px system-ui, Arial, sans-serif; }
+    .veh-chip { width:10px; height:10px; border-radius:50%; flex: 0 0 auto; border: 1px solid rgba(0,0,0,.2); }
+    .veh-plate { font-weight: 600; }
+    .veh-dim { color:#666; font-weight: 400; }
+
     .pickup-label {
       color: #fff; border-radius: 12px; padding: 2px 6px; font: 11px/13px system-ui, Arial, sans-serif;
       border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.35);
     }
     .leaflet-div-icon{ background:transparent; border:none; }
 
-    /* simple round badge with a car glyph inside */
-    .vehicle-wrap {
-      display: grid;
-      place-items: center;
-      width: auto;
-      height: auto;
-      background: transparent;
-      border: none;
-      box-shadow: none;
-    }
-
+    .vehicle-wrap { display: grid; place-items: center; width: auto; height: auto; background: transparent; border: none; box-shadow: none; }
     .vehicle-wrap .car{ width:20px; height:20px; }
   </style>
 </head>
@@ -48,6 +50,8 @@
   <script>
     // Map (SVG renderer; keep default)
     const map = L.map('map').setView([38.0, 23.7], 7);
+    let selectedVehicleIds = new Set();
+
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(map);
 
     // Panes for z-order
@@ -82,6 +86,11 @@
       routes:    L.layerGroup([], { pane: 'pane-routes'    }).addTo(map),
     };
 
+    // --- NEW: track latest fleet for UI rendering ---
+    let fleetLatest = []; // array of GeoJSON features (fleet)
+    // Map vehicleId -> L.Marker
+    const fleetMarkers = new Map();
+
     let didInitialFit = false;
     let lastBounds = L.latLngBounds([]);
 
@@ -102,34 +111,20 @@
       const body = colorForKey(String(props.license_plate || props.id || ''));
       const s = size;               // overall marker size (px)
       const a = Math.round(s / 2);  // anchor (center)
-
       const html = `
-      <svg xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 48 48" width="${s}" height="${s}" aria-hidden="true">
-        <!-- optional outline for visibility on light/dark tiles -->
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="${s}" height="${s}" aria-hidden="true">
         <g stroke="rgba(0,0,0,.35)" stroke-width="1.2">
-          <!-- body -->
           <path d="M8 24c0-1 .6-1.9 1.6-2.3l6.5-2.6c.5-.2 1-.3 1.5-.3h12.8c.5 0 1 .1 1.5.3l6.5 2.6C39.4 22.1 40 23 40 24v7.5
-                  c0 1.1-.9 2-2 2h-1.8a6 6 0 0 1-12 0h-4.4a6 6 0 0 1-12 0H8c-1.1 0-2-.9-2-2V24z"
-                fill="${body}" />
-          <!-- windows -->
+                  c0 1.1-.9 2-2 2h-1.8a6 6 0 0 1-12 0h-4.4a6 6 0 0 1-12 0H8c-1.1 0-2-.9-2-2V24z" fill="${body}" />
           <rect x="15" y="19" width="8" height="3.2" rx="0.6" fill="rgba(255,255,255,.9)" stroke="none"/>
           <rect x="25" y="19" width="8" height="3.2" rx="0.6" fill="rgba(255,255,255,.9)" stroke="none"/>
-          <!-- wheels -->
           <circle cx="16" cy="34" r="4.4" fill="#222"/>
           <circle cx="32" cy="34" r="4.4" fill="#222"/>
         </g>
       </svg>`;
+      return L.divIcon({ className: 'leaflet-div-icon veh-marker', html, iconSize: [s, s], iconAnchor: [a, a] });
 
-      return L.divIcon({
-        className: 'leaflet-div-icon',
-        html,
-        iconSize: [s, s],
-        iconAnchor: [a, a]
-      });
     }
-
-
 
     function addFeatureCollection(fc, kind) {
       if (!fc) return;
@@ -156,33 +151,40 @@
       const color = (kind === 'fleet') ? '#2b8eff' : '#a12bff';
       const paneName = (kind === 'fleet') ? 'pane-fleet' : 'pane-amea';
 
+      // --- NEW: if fleet, remember the features for the UI list ---
+      if (kind === 'fleet') fleetLatest = fc.features.slice();
+
       for (const f of fc.features) {
         const c = f.geometry?.coordinates;
         if (!c || c.length !== 2) continue;
         const latlng = L.latLng(c[1], c[0]);
         const props = f.properties || {};
-
         let marker;
         if (kind === 'fleet') {
           marker = L.marker(latlng, {
             pane: paneName,
-            icon: vehicleIcon(props, 36), // try 36–44 for bigger cars
+            icon: vehicleIcon(props, 36),
             title: String(props.license_plate || props.id || 'Vehicle')
           });
         } else {
           marker = L.circleMarker(latlng, { ...circle(color), pane: paneName });
         }
-
-
         marker.bindPopup(renderPopup(kind, props));
         layers[kind].addLayer(marker);
+        // remember this marker by vehicle id
+        const id = String(props.id || '');
+        fleetMarkers.set(id, marker);
+
+        // ensure the correct dim state once it's on the map
+        marker.once('add', () => applyFleetDim());
+
         lastBounds.extend(latlng);
       }
-
     }
 
     async function refreshAll() {
       try {
+        fleetMarkers.clear();
         const ts = Date.now();
         const [disR, ameaR, fleetR] = await Promise.all([
           fetch('/api/disasters?active=true&ts=' + ts, { cache: 'no-store' }),
@@ -194,12 +196,15 @@
         layers.disasters.clearLayers();
         layers.amea.clearLayers();
         layers.fleet.clearLayers();
-
         lastBounds = L.latLngBounds([]);
 
         addFeatureCollection(disasters, 'disasters');
         addFeatureCollection(amea,      'amea');
         addFeatureCollection(fleet,     'fleet');
+
+        // --- NEW: re-render the vehicle list in the control ---
+        renderVehicleList();
+        applyFleetDim();
 
         if (!didInitialFit && lastBounds.isValid()) {
           map.fitBounds(lastBounds.pad(0.1));
@@ -211,13 +216,10 @@
     }
 
     // --- Routes drawing ---
-    function clearRoutes() {
-      layers.routes.clearLayers();
-    }
+    function clearRoutes() { layers.routes.clearLayers(); }
     function drawRoutes(fc) {
       clearRoutes();
       if (!fc || !Array.isArray(fc.features)) return;
-
       const routeLayer = L.geoJSON(fc, {
         pane: 'pane-routes',
         style: (f) => {
@@ -255,16 +257,67 @@
         }
       });
       layers.routes.addLayer(routeLayer);
-
       try {
         const b = routeLayer.getBounds();
         if (b.isValid()) map.fitBounds(b.pad(0.2));
       } catch {}
     }
 
+      // --- NEW: plan with selected vehicles ---
+      function getSelectedVehicleIds() {
+        const box = document.getElementById('veh-list-box');
+        if (!box) return [];
+        return Array.from(box.querySelectorAll('input[type="checkbox"][data-veh-id]:checked'))
+          .map(el => el.getAttribute('data-veh-id'));
+      }
+
+      function getSelectedVehicleIdsSet() {
+    const box = document.getElementById('veh-list-box');
+    if (!box) return new Set();
+    return new Set(
+      Array.from(box.querySelectorAll('input[type="checkbox"][data-veh-id]:checked'))
+        .map(el => el.getAttribute('data-veh-id'))
+    );
+  }
+
+  function setMarkerDim(marker, dim) {
+    const el = marker.getElement();
+    if (!el) return; // not on map yet
+    // console.log("toggle dim",  dim);
+    // el.classList.toggle('is-dim', !!dim);
+    if(!!dim){
+      // el.classList.add('is-dim');
+      el.style.opacity = '0.7';
+      el.style.filter = 'grayscale(70%)';
+    } else {
+      el.style.opacity = '';
+      el.style.filter = '';
+    }
+    // console.log(el.classList)
+  }
+
+  function applyFleetDim() {
+    console.log('applyFleetDim');
+    const selected = getSelectedVehicleIdsSet();
+    const anySelected = selected.size > 0;
+    // If there are selections: dim those NOT selected.
+    // If none selected: dim ALL.
+    for (const [id, marker] of fleetMarkers.entries()) {
+      const dim = anySelected ? !selected.has(id) : true;
+      // console.log(id, dim);
+      setMarkerDim(marker, dim);
+    }
+  }
+
+
     async function planRoutes() {
       try {
-        const r = await fetch('/api/plan-routes', { method: 'POST' });
+        const include = getSelectedVehicleIds();
+        const r = await fetch('/api/plan-routes', {
+          method: 'POST',
+          headers: { 'Content-Type':'application/json' },
+          body: JSON.stringify({ include }) // <- server will filter to these IDs (or all if empty)
+        });
         const fc = await r.json();
         drawRoutes(fc);
         if (fc?.meta) console.log('Route meta:', fc.meta);
@@ -273,7 +326,7 @@
       }
     }
 
-    // --- UI: legend + buttons ---
+    // --- UI: legend + buttons + VEHICLE LIST ---
     const legend = L.control({position:'topright'});
     legend.onAdd = function() {
       const div = L.DomUtil.create('div', 'legend');
@@ -285,9 +338,59 @@
     };
     legend.addTo(map);
 
+    // --- NEW: vehicles list renderer ---
+    let vehListContainer = null;
+    function renderVehicleList() {
+      if (!vehListContainer) return; // created in Buttons.onAdd
+      const box = vehListContainer.querySelector('#veh-list-box');
+      if (!box) return;
+
+      
+      // Use the global selectedVehicleIds
+      const prevSelected = selectedVehicleIds;
+
+
+      box.innerHTML = '';
+      // Sort by plate then id for readability
+      const sorted = fleetLatest.slice().sort((a,b) => {
+        const ap = String(a.properties?.license_plate||'');
+        const bp = String(b.properties?.license_plate||'');
+        if (ap && bp && ap !== bp) return ap.localeCompare(bp);
+        return String(a.properties?.id||'').localeCompare(String(b.properties?.id||''));
+      });
+
+      for (const f of sorted) {
+        const p = f.properties || {};
+        const id = String(p.id || '');
+        const plate = String(p.license_plate || '—');
+        const chipColor = colorForKey(plate || id);
+
+        const row = document.createElement('label');
+        row.className = 'veh-item';
+        row.innerHTML = `
+          <input type="checkbox" data-veh-id="${esc(id)}">
+          <span class="veh-chip" style="background:${chipColor}"></span>
+          <span class="veh-plate">${esc(plate)}</span>
+          <span class="veh-dim">(${esc(id)})</span>
+        `;
+        const cb = row.querySelector('input');
+        cb.checked = prevSelected.has(id);
+        cb.addEventListener('change', () => {
+          if (cb.checked) selectedVehicleIds.add(id);
+          else selectedVehicleIds.delete(id);
+          applyFleetDim();
+        });
+
+        box.appendChild(row);
+
+        
+      }
+    }
+
     const Buttons = L.Control.extend({
       onAdd: function() {
         const div = L.DomUtil.create('div', 'leaflet-control custom-btns');
+
         const plan = L.DomUtil.create('button', '', div);
         plan.textContent = 'Plan pickups';
         plan.onclick = (e) => { e.preventDefault(); planRoutes(); };
@@ -295,6 +398,38 @@
         const clr = L.DomUtil.create('button', '', div);
         clr.textContent = 'Clear routes';
         clr.onclick = (e) => { e.preventDefault(); clearRoutes(); };
+
+        // --- NEW: Vehicles list (inside same control) ---
+        const wrap = L.DomUtil.create('div', 'veh-wrap', div);
+        wrap.innerHTML = `
+          <details open>
+            <summary>Vehicles</summary>
+            <div class="veh-tools">
+              <button type="button" id="veh-all">All</button>
+              <button type="button" id="veh-none">None</button>
+            </div>
+            <div id="veh-list-box" class="veh-list"></div>
+          </details>
+        `;
+        vehListContainer = wrap;
+
+        // Tool buttons
+        wrap.querySelector('#veh-all').onclick = (e) => {
+          e.preventDefault();
+          selectedVehicleIds = new Set(fleetLatest.map(f => String(f.properties?.id || '')));
+          renderVehicleList();
+          applyFleetDim();
+        };
+        wrap.querySelector('#veh-none').onclick = (e) => {
+          e.preventDefault();
+          selectedVehicleIds.clear();
+          renderVehicleList();
+          applyFleetDim();
+        };
+
+        
+        // Initial render (will fill on first refresh)
+        renderVehicleList();
 
         // stop map drags when clicking
         L.DomEvent.disableClickPropagation(div);

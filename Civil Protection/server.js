@@ -306,6 +306,7 @@ app.get('/healthz', (_req, res) => res.json({
 
 // everything else behind Basic Auth
 app.use(basicAuth);
+app.use(express.json());
 
 // hot-reload providers (re-scan outputs)
 app.post('/api/reload', (req, res) => {
@@ -721,6 +722,7 @@ async function loadActiveDisasterGeometries() {
 app.post('/api/plan-routes', async (_req, res) => {
   try {
     const time1 = Date.now();
+    const include = Array.isArray(_req.body?.include) ? _req.body.include.map(String) : [];
     const [amea, fleet, geoms] = await Promise.all([
       loadAmeaFeatures(), 
       loadFleetFeatures(), 
@@ -759,22 +761,31 @@ app.post('/api/plan-routes', async (_req, res) => {
     console.log("Targets: " + targets.length);
     // 2) Vehicles with capacity (ad hoc city via nearest center)
     console.log(fleet[0], fleet[1])
-    const vehiclesAll = fleet.map(v => ({
-    id: v.properties.id,
-    plate: v.properties.license_plate,
-    start: v.geometry.coordinates,                 // [lon, lat]
-    seatsLeft: Number(v.properties.availableSeats ?? 0),
-    city: nearestCityForCoord(v.geometry.coordinates),
-    picks: []
-    })).filter(v => v.seatsLeft > 0);
-    console.log(vehiclesAll[0])
-    const totalFree = vehiclesAll.reduce((s,v)=>s+v.seatsLeft,0);
+
+    const vehiclesAll = fleet
+      .map(v => ({
+        id: v.properties.id,
+        plate: v.properties.license_plate,
+        start: v.geometry.coordinates,                 // [lon, lat]
+        seatsLeft: Number(v.properties.availableSeats ?? 0),
+        city: nearestCityForCoord(v.geometry.coordinates),
+        picks: []
+      }))
+      .filter(v => v.seatsLeft > 0)
+      .filter(v => include.length ? include.includes(String(v.id)) : true); // <- filter here
+
+    const totalFree = vehiclesAll.reduce((s, v) => s + v.seatsLeft, 0);
     if (!totalFree) {
-    return res.json({
+      return res.json({
         type: 'FeatureCollection',
         features: [],
-        meta: { vehicles: fleet.length, targets: targets.length, activeDisasters: geoms.length, reason: 'no_capacity' }
-    });
+        meta: {
+          vehicles: fleet.length,
+          targets: targets.length,
+          activeDisasters: geoms.length,
+          reason: include.length ? 'no_capacity_in_selected' : 'no_capacity'
+        }
+      });
     }
     console.log("2a) Vehicles: " + vehiclesAll.length);
     // 2a) Group vehicles and targets by city (Athens/Thessaloniki/Patras)

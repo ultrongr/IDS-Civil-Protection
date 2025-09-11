@@ -16,7 +16,10 @@ body { margin: 0; background: var(--bg); color: var(--fg); font-family: ui-sans-
 .subtitle { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
 
 #map { height: calc(100vh - 78px); width: 100vw; }
-
+.leaflet-marker-icon.is-dim {
+  opacity: 0.35;
+  filter: grayscale(80%);
+}
 .leaflet-container { background: #0d1328; }
 .leaflet-div-icon { background: transparent; border: none; }
 
