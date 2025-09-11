@@ -22,11 +22,7 @@ ORGANIZATION_ID = "urn:ngsi-ld:PublicOrganization:CivilService"
 HTTP_TIMEOUT = 15  # seconds
 
 # Vehicle types for civil service
-VEHICLE_TYPES = [
-    "ambulance", "fire_truck", "police_car", "patrol_car",
-    "rescue_vehicle", "utility_van", "command_vehicle",
-    "transport_truck", "maintenance_vehicle", "emergency_response"
-]
+VEHICLE_TYPES = ["ambulance", "fire_truck", "police_car"]
 
 # Contact types
 CONTACT_TYPES = ["radio", "sms", "phone", "satellite"]
@@ -51,8 +47,8 @@ GREEK_CITIES: Dict[str, Dict[str, float]] = {
 
 # ---- city distribution (lower Athens weight) ----
 CITY_WEIGHTS: Dict[str, float] = {
-    "Athens": 0.5,         # ↓ fewer vehicles in Athens
-    "Thessaloniki": 0.30,   # ↑ more
+    # "Athens": 0.5,         # ↓ fewer vehicles in Athens
+    # "Thessaloniki": 0.30,   # ↑ more
     "Patras": 0.20,         # ↑ more
     # Add any of the other cities above if you also want vehicles there
     # "Heraklion": 0.10,
@@ -61,14 +57,35 @@ CITY_WEIGHTS: Dict[str, float] = {
 
 # Optional custom fetch radii per city (km)
 CITY_RADII: Dict[str, float] = {
-    "Athens": 40,
-    "Thessaloniki": 30,
-    "Patras": 10,
-    "Heraklion": 20,
-    "Larissa": 20,
-    "Volos": 20,
-    "Kavala": 20,
-    "Kalamata": 20,
+    # "Athens": 40,
+    # "Thessaloniki": 30,
+    "Patras": 12,
+    # "Heraklion": 20,
+    # "Larissa": 20,
+    # "Volos": 20,
+    # "Kavala": 20,
+    # "Kalamata": 20,
+}
+
+STATIONS: Dict[str, Dict[str, List[Dict[str, float]]]] = {
+    "ambulance": {
+        "Patras": [
+            {"name": "General Hospital Agios Andreas", "lon": 21.748008, "lat": 38.234512},
+            {"name": "University Gen. Hospital of Patras (Rio)", "lon": 21.795547, "lat": 38.294240},
+        ]
+    },
+    "fire_truck": {
+        "Patras": [
+            {"name": "Patras Fire Brigade HQ", "lon": 21.728747, "lat": 38.234359},
+            {"name": "Pyrosvestio", "lon": 21.742785, "lat": 38.252295},
+        ]
+    },
+    "police_car": {
+        "Patras": [
+            {"name": "B' police station", "lon": 21.737566, "lat": 38.245579},
+            {"name": "A' police station", "lon": 21.754060, "lat": 38.261352},
+        ]
+    }
 }
 
 
@@ -253,21 +270,46 @@ def weighted_city_choice(weights: Dict[str, float]) -> str:
 
 # ---------------- Simulator ----------------
 class VehicleFleetSimulator:
-    def __init__(self, num_vehicles=10):
-        self.num_vehicles = num_vehicles
+    def __init__(self, num_vehicles=10):  # force 10 vehicles
+        self.num_vehicles = 10
         self.vehicles: List[Dict] = []
         self.road_manager = RoadNetworkManager()
 
-        # Load roads per city using CITY_WEIGHTS keys (you can extend to more)
-        print("🛣️  Loading road network by city...")
+        # Load ONLY Patras roads (as per CITY_WEIGHTS)
+        print("🛣️  Loading road network by city (Patras)...")
         for city in CITY_WEIGHTS.keys():
             if city in GREEK_CITIES:
                 lat = GREEK_CITIES[city]["lat"]
                 lon = GREEK_CITIES[city]["lon"]
-                radius = CITY_RADII.get(city, 20)
+                radius = CITY_RADII.get(city, 12)
                 self.road_manager.load_roads_for_city(city, lat, lon, radius)
         print(f"🗺️  Road segments loaded (global): {len(self.road_manager.road_segments)}")
 
+    def _spawn_point_near_station(self, vehicle_type: str, city: str = "Patras") -> List[float]:
+        stations = STATIONS.get(vehicle_type, {}).get(city, [])
+        if not stations:
+            # fallback to any road point in city if stations list is empty
+            lon, lat = self.road_manager.get_random_road_point(city)
+            return [lon, lat]
+
+        st = random.choice(stations)
+
+        # random offset 50–300 m around the station
+        r_m = random.uniform(50.0, 300.0)
+        theta = random.uniform(0.0, 2.0 * math.pi)
+        lat_rad = math.radians(st["lat"])
+
+        dlat = (r_m * math.cos(theta)) / 111_000.0
+        dlon = (r_m * math.sin(theta)) / (111_000.0 * max(0.1, math.cos(lat_rad)))
+
+        cand_lat = st["lat"] + dlat
+        cand_lon = st["lon"] + dlon
+
+        # snap to nearest road point
+        snap_lon, snap_lat = self.road_manager.get_nearest_road_point(cand_lat, cand_lon)
+        return [snap_lon, snap_lat]
+    
+    
     @staticmethod
     def _now() -> str:
         return datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
@@ -277,16 +319,15 @@ class VehicleFleetSimulator:
         number = random.randint(1000, 9999)
         return f"{prefix}-{number}"
 
-    def generate_road_coordinates(self, city: Optional[str] = None) -> List[float]:
-        lon, lat = self.road_manager.get_random_road_point(city)
-        return [lon, lat]  # GeoJSON [lon, lat]
+    def generate_road_coordinates(self, vehicle_type: str, city: str = "Patras") -> List[float]:
+        return self._spawn_point_near_station(vehicle_type, city)
 
     def move_vehicle_along_road(
         self,
         current_lon: float,
         current_lat: float,
         speed_kmh: float,
-        time_delta_seconds: float = 30,
+        time_delta_seconds: float = 5,
         city: Optional[str] = None
     ) -> Tuple[float, float]:
         """Move vehicle ~distance based on speed; bias to road points in the given city if provided."""
@@ -348,9 +389,10 @@ class VehicleFleetSimulator:
         return round(random.triangular(min_s, max_s, speeds["cruise"] * mult), 1)
 
     def generate_vehicle_entity(self, vehicle_id: int) -> Dict:
-        # choose a "home city" using weights
-        home_city = weighted_city_choice(CITY_WEIGHTS)
+        # Force home city = Patras
+        home_city = "Patras"
 
+        # pick from restricted set
         vehicle_type = random.choice(VEHICLE_TYPES)
         capacity_info = self.get_vehicle_capacity(vehicle_type)
         current_time = self._now()
@@ -358,7 +400,8 @@ class VehicleFleetSimulator:
         speed = self.get_realistic_speed_for_vehicle(vehicle_type)
         crew_onboard = random.randint(1, max(1, capacity_info["crew"] - 1))
 
-        road_coordinates = self.generate_road_coordinates(home_city)
+        # *** changed: station-based spawn in Patras by vehicle type ***
+        road_coordinates = self.generate_road_coordinates(vehicle_type, home_city)
 
         entity = {
             "id": f"{BASE_ENTITY_ID}-{vehicle_id:03d}",
@@ -367,7 +410,7 @@ class VehicleFleetSimulator:
             "vehicleType":   { "type": "Text",    "value": vehicle_type },
             "license_plate": { "type": "Text",    "value": self.generate_license_plate() },
             "owner":         { "type": "Text",    "value": ORGANIZATION_ID },
-            "homeCity":      { "type": "Text",    "value": home_city },  # NEW: where we placed it
+            "homeCity":      { "type": "Text",    "value": home_city },
 
             "contactPoint": {
                 "type": "StructuredValue",
@@ -399,7 +442,7 @@ class VehicleFleetSimulator:
             "lastUpdated": { "type": "DateTime", "value": current_time }
         }
         return entity
-
+    
     # -------------- Orion helpers --------------
     def check_and_create_entity(self, entity: Dict) -> bool:
         entity_id = entity["id"]
@@ -493,7 +536,10 @@ class VehicleFleetSimulator:
         cur_lon, cur_lat = coords
         vtype = vehicle.get("vehicleType", {}).get("value", "patrol_car")
         home_city = vehicle.get("homeCity", {}).get("value")  # bias movement to city
-        new_speed = self.get_realistic_speed_for_vehicle(vtype)
+        if random.random() < 0.5:
+            new_speed = self.get_realistic_speed_for_vehicle(vtype)
+        else:
+            new_speed = 0
 
         new_lon, new_lat = self.move_vehicle_along_road(cur_lon, cur_lat, new_speed, city=home_city)
 
@@ -606,7 +652,7 @@ def main():
     print("🚨 Civil Service Vehicle Fleet Simulator - Road Edition (NGSI v2) 🚨")
     print("=" * 60)
 
-    simulator = VehicleFleetSimulator(num_vehicles=30)
+    simulator = VehicleFleetSimulator(num_vehicles=10)
 
     while True:
         print("\n📋 Options:")

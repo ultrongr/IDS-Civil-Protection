@@ -1,0 +1,222 @@
+[
+  {
+    "externalId": "club-0001",
+    "name": "Eleni",
+    "surname": "Papadopoulou",
+    "email": "eleni.papadopoulou@example.org",
+    "phoneNumber": "+30 6901112233",
+    "address": "12 Korinthou, Patras",
+    "floor": 2,
+    "birthday": "1978-05-14",
+    "disabilities": ["mobility_impairment"],
+    "disabilitiesDesc": "Wheelchair user; needs ramp and elevator access.",
+    "disabilityPct": 67,
+    "loc": { "type": "Point", "coordinates": [21.7346, 38.2466] },
+    "caretaker": {
+      "carename": "Nikos",
+      "caresurname": "Ioannou",
+      "careemail": "nikos.ioannou@example.org",
+      "carephone": "+30 2105557788",
+      "caredescription": "Brother",
+      "parent": 0
+    }
+  },
+  {
+    "externalId": "club-0002",
+    "name": "Giorgos",
+    "surname": "Kostas",
+    "email": "giorgos.kostas@example.org",
+    "phoneNumber": "+30 6902223344",
+    "address": "88 Maizonos, Patras",
+    "floor": 1,
+    "birthday": "1985-11-02",
+    "disabilities": ["visual_impairment"],
+    "disabilitiesDesc": "Needs large-print documents and high-contrast signage.",
+    "disabilityPct": 50,
+    "loc": { "type": "Point", "coordinates": [21.7374, 38.2509] },
+    "caretaker": {
+      "carename": "Eirini",
+      "caresurname": "Pappas",
+      "careemail": "eirini.pappas@example.org",
+      "carephone": "+30 2106668899",
+      "caredescription": "Spouse",
+      "parent": 0
+    }
+  },
+  {
+    "externalId": "club-0003",
+    "name": "Maria",
+    "surname": "Nikolaou",
+    "email": "maria.nikolaou@example.org",
+    "phoneNumber": "+30 6903334455",
+    "address": "5 Ermou, Patras",
+    "floor": 3,
+    "birthday": "1991-03-22",
+    "disabilities": ["hearing_impairment"],
+    "disabilitiesDesc": "Uses hearing aids; prefers SMS or written communication.",
+    "disabilityPct": 45,
+    "loc": { "type": "Point", "coordinates": [21.7317, 38.2477] },
+    "caretaker": {
+      "carename": "Stavros",
+      "caresurname": "Markou",
+      "careemail": "stavros.markou@example.org",
+      "carephone": "+30 2107779900",
+      "caredescription": "Friend",
+      "parent": 0
+    }
+  },
+  {
+    "externalId": "club-0004",
+    "name": "Nikos",
+    "surname": "Ioannidis",
+    "email": "nikos.ioannidis@example.org",
+    "phoneNumber": "+30 6904445566",
+    "address": "101 Gounari, Patras",
+    "floor": 0,
+    "birthday": "1972-07-09",
+    "disabilities": ["intellectual_disability"],
+    "disabilitiesDesc": "Benefits from simplified, step-by-step instructions.",
+    "disabilityPct": 60,
+    "loc": { "type": "Point", "coordinates": [21.7400, 38.2400] },
+    "caretaker": {
+      "carename": "Anna",
+      "caresurname": "Ioannidi",
+      "careemail": "anna.ioannidi@example.org",
+      "carephone": "+30 2108880011",
+      "caredescription": "Sister",
+      "parent": 0
+    }
+  },
+  {
+    "externalId": "club-0005",
+    "name": "Dimitra",
+    "surname": "Vasileiou",
+    "email": "dimitra.vasileiou@example.org",
+    "phoneNumber": "+30 6905556677",
+    "address": "34 Karolou, Patras",
+    "floor": 4,
+    "birthday": "1993-12-30",
+    "disabilities": ["chronic_pain"],
+    "disabilitiesDesc": "Reduced mobility during flare-ups; needs nearby seating.",
+    "disabilityPct": 40,
+    "loc": { "type": "Point", "coordinates": [21.7500, 38.2550] },
+    "caretaker": {
+      "carename": "Christos",
+      "caresurname": "Lazarou",
+      "careemail": "christos.lazarou@example.org",
+      "carephone": "+30 2109991122",
+      "caredescription": "Cousin",
+      "parent": 0
+    }
+  },
+  {
+    "externalId": "club-0006",
+    "name": "Petros",
+    "surname": "Karamitsos",
+    "email": "petros.karamitsos@example.org",
+    "phoneNumber": "+30 6906667788",
+    "address": "7 Zaimi, Patras",
+    "floor": 1,
+    "birthday": "1980-04-05",
+    "disabilities": ["respiratory_condition"],
+    "disabilitiesDesc": "Avoids stairs; prefers well-ventilated spaces.",
+    "disabilityPct": 55,
+    "loc": { "type": "Point", "coordinates": [21.7600, 38.2600] },
+    "caretaker": {
+      "carename": "Georgia",
+      "caresurname": "Alexiou",
+      "careemail": "georgia.alexiou@example.org",
+      "carephone": "+30 2103334455",
+      "caredescription": "Neighbor",
+      "parent": 0
+    }
+  },
+  {
+    "externalId": "club-0007",
+    "name": "Sofia",
+    "surname": "Marinou",
+    "email": "sofia.marinou@example.org",
+    "phoneNumber": "+30 6907778899",
+    "address": "56 Old National Road, Patras",
+    "floor": 2,
+    "birthday": "1998-09-17",
+    "disabilities": ["autism_spectrum"],
+    "disabilitiesDesc": "Prefers predictable schedules and quieter environments.",
+    "disabilityPct": 35,
+    "loc": { "type": "Point", "coordinates": [21.7700, 38.2700] },
+    "caretaker": {
+      "carename": "Vasilis",
+      "caresurname": "Drosos",
+      "careemail": "vasilis.drosos@example.org",
+      "carephone": "+30 2104445566",
+      "caredescription": "Parent",
+      "parent": 1
+    }
+  },
+  {
+    "externalId": "club-0008",
+    "name": "Katerina",
+    "surname": "Spanou",
+    "email": "katerina.spanou@example.org",
+    "phoneNumber": "+30 6908889900",
+    "address": "3 Othonos-Amalias, Patras",
+    "floor": 5,
+    "birthday": "1987-01-28",
+    "disabilities": ["visual_impairment"],
+    "disabilitiesDesc": "Needs tactile guidance and audio prompts.",
+    "disabilityPct": 48,
+    "loc": { "type": "Point", "coordinates": [21.7800, 38.2800] },
+    "caretaker": {
+      "carename": "Ioannis",
+      "caresurname": "Skordis",
+      "careemail": "ioannis.skordis@example.org",
+      "carephone": "+30 2105556677",
+      "caredescription": "Friend",
+      "parent": 0
+    }
+  },
+  {
+    "externalId": "club-0009",
+    "name": "Alexandros",
+    "surname": "Georgiou",
+    "email": "alex.georgiou@example.org",
+    "phoneNumber": "+30 6909990011",
+    "address": "20 Antheias, Patras",
+    "floor": 3,
+    "birthday": "1975-06-11",
+    "disabilities": ["mobility_impairment"],
+    "disabilitiesDesc": "Uses cane; needs accessible entrances.",
+    "disabilityPct": 52,
+    "loc": { "type": "Point", "coordinates": [21.7875, 38.2865] },
+    "caretaker": {
+      "carename": "Eleni",
+      "caresurname": "Daniil",
+      "careemail": "eleni.daniil@example.org",
+      "carephone": "+30 2106667788",
+      "caredescription": "Daughter",
+      "parent": 0
+    }
+  },
+  {
+    "externalId": "club-0010",
+    "name": "Ioanna",
+    "surname": "Petsi",
+    "email": "ioanna.petsi@example.org",
+    "phoneNumber": "+30 6910001122",
+    "address": "9 Agiou Andreou, Patras",
+    "floor": 1,
+    "birthday": "1990-10-03",
+    "disabilities": ["hearing_impairment"],
+    "disabilitiesDesc": "Prefers written/visual notifications.",
+    "disabilityPct": 44,
+    "loc": { "type": "Point", "coordinates": [21.7900, 38.2900] },
+    "caretaker": {
+      "carename": "Panagiotis",
+      "caresurname": "Leventis",
+      "careemail": "panagiotis.leventis@example.org",
+      "carephone": "+30 2107778899",
+      "caredescription": "Brother",
+      "parent": 0
+    }
+  }
+]

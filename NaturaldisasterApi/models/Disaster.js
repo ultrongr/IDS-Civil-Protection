@@ -39,7 +39,8 @@ const naturalDisasterSchema = new mongoose.Schema({
   },
 
   updatedAt: { type: Date, default: Date.now },
-  source: { type: String }
+  source: { type: String },
+  sourceId: { type: String }
 }, { timestamps: true });
 
 naturalDisasterSchema.index({ areaOfEffect: '2dsphere' });

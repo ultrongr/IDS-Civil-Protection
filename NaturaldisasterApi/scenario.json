@@ -60,7 +60,7 @@
       "center": [21.83, 38.21],
       "radiusKm": 7,
       "shape": "blob",
-      "start": "NOW-4h",
+      "start": "NOW+60S",
       "projected": { "steps": 1, "factor": 1.25 },
       "dangerLevel": "moderate"
     },

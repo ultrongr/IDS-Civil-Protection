@@ -114,11 +114,19 @@ function parseWhen(v) {
   if (v instanceof Date) return v;
   const s = String(v).trim().toUpperCase();
   if (s === 'NOW') return new Date();
-  const m = s.match(/^NOW([+-])(\d+)([HMD])$/); // e.g. NOW-3H, NOW+2D
+  const m = s.match(/^NOW([+-])(\d+)([SHMD])$/); // e.g. NOW-3H, NOW+2D
   if (m) {
     const [, sign, numStr, unit] = m;
     const num = Number(numStr);
-    const mult = unit === 'H' ? 3600e3 : unit === 'D' ? 24*3600e3 : 60e3; // H/D/M(in)
+    // const mult = unit === 'H' ? 3600e3 : unit === 'D' ? 24*3600e3 : 60e3; // H/D/M(in)
+    let mult;
+    if (unit === 'H') mult = 3600e3;
+    else if (unit === 'D') mult = 24*3600e3;
+    else if (unit === 'M') mult = 60e3;
+    else if (unit === 'S') {
+      mult = 1e3; 
+    }
+    else return null;
     const delta = (sign === '-' ? -1 : 1) * num * mult;
     return new Date(Date.now() + delta);
   }
