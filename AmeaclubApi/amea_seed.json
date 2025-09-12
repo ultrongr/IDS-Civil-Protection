@@ -11,7 +11,7 @@
     "disabilities": ["mobility_impairment"],
     "disabilitiesDesc": "Wheelchair user; needs ramp and elevator access.",
     "disabilityPct": 67,
-    "loc": { "type": "Point", "coordinates": [21.7346, 38.2466] },
+    "loc": { "type": "Point", "coordinates": [21.7756, 38.2466] },
     "caretaker": {
       "carename": "Nikos",
       "caresurname": "Ioannou",
@@ -33,7 +33,7 @@
     "disabilities": ["visual_impairment"],
     "disabilitiesDesc": "Needs large-print documents and high-contrast signage.",
     "disabilityPct": 50,
-    "loc": { "type": "Point", "coordinates": [21.7374, 38.2509] },
+    "loc": { "type": "Point", "coordinates": [21.7974, 38.2509] },
     "caretaker": {
       "carename": "Eirini",
       "caresurname": "Pappas",
@@ -55,7 +55,7 @@
     "disabilities": ["hearing_impairment"],
     "disabilitiesDesc": "Uses hearing aids; prefers SMS or written communication.",
     "disabilityPct": 45,
-    "loc": { "type": "Point", "coordinates": [21.7317, 38.2477] },
+    "loc": { "type": "Point", "coordinates": [21.7717, 38.2397] },
     "caretaker": {
       "carename": "Stavros",
       "caresurname": "Markou",
@@ -71,13 +71,13 @@
     "surname": "Ioannidis",
     "email": "nikos.ioannidis@example.org",
     "phoneNumber": "+30 6904445566",
-    "address": "101 Gounari, Patras",
+    "address": "Vrachneika, Patras",
     "floor": 0,
     "birthday": "1972-07-09",
     "disabilities": ["intellectual_disability"],
     "disabilitiesDesc": "Benefits from simplified, step-by-step instructions.",
     "disabilityPct": 60,
-    "loc": { "type": "Point", "coordinates": [21.7400, 38.2400] },
+    "loc": { "type": "Point", "coordinates": [21.652820, 38.155398 ] },
     "caretaker": {
       "carename": "Anna",
       "caresurname": "Ioannidi",
@@ -99,7 +99,7 @@
     "disabilities": ["chronic_pain"],
     "disabilitiesDesc": "Reduced mobility during flare-ups; needs nearby seating.",
     "disabilityPct": 40,
-    "loc": { "type": "Point", "coordinates": [21.7500, 38.2550] },
+    "loc": { "type": "Point", "coordinates": [21.6788, 38.12049] },
     "caretaker": {
       "carename": "Christos",
       "caresurname": "Lazarou",

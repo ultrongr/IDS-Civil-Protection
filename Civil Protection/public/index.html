@@ -79,6 +79,14 @@
       return `hsl(${hue}, 78%, 45%)`;
     }
 
+    function colorFromType(type) {
+      if (type === 'ambulance') return '#fff200';
+      if (type === 'fire_truck') return '#ff0d13';
+      if (type === 'police_car') return '#146dd1';
+      console.log('Unknown vehicle type:', type);
+      return '#ffffff';
+    }
+
     const layers = {
       disasters: L.layerGroup([], { pane: 'pane-disasters' }).addTo(map),
       amea:      L.layerGroup([], { pane: 'pane-amea'      }).addTo(map),
@@ -96,7 +104,7 @@
 
     function renderPopup(kind, p) {
       if (kind === 'fleet') {
-        return `<b>Vehicle</b><br/>ID: ${esc(p.id)}<br/>Plate: ${esc(p.license_plate)}<br/>Status: ${esc(p.status)}<br/>Speed: ${esc(String(p.speed))}`;
+        return `<b>Vehicle</b><br/>ID: ${esc(p.id)}<br/>Plate: ${esc(p.license_plate)}<br/>Type: ${esc(p.type)}<br/>Speed: ${esc(String(p.speed))}`;
       }
       if (kind === 'amea') {
         return `<b>AMEA</b><br/>${esc(p.name || 'Unknown')}<br/>Disability %: ${esc(String(p.disabilityPct ?? '-'))}<br/>Phone: ${esc(p.phone ?? '-')}` +
@@ -108,7 +116,8 @@
     }
     function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
     function vehicleIcon(props = {}, size = 36) {
-      const body = colorForKey(String(props.license_plate || props.id || ''));
+      // const body = colorForKey(String(props.license_plate || props.id || ''));
+      const body = colorFromType(props.type)
       const s = size;               // overall marker size (px)
       const a = Math.round(s / 2);  // anchor (center)
       const html = `
@@ -225,13 +234,16 @@
         style: (f) => {
           if (f.properties?.kind !== 'route') return undefined;
           const p = f.properties;
-          const color = colorForKey(String(p.license_plate || p.vehicleId || ''));
+          // const color = colorForKey(String(p.license_plate || p.vehicleId || ''));
+          const color = colorFromType(p.type);
+          
           return { color, weight: 7, opacity: 0.95 };
         },
         pointToLayer: (f, latlng) => {
           const p = f.properties || {};
           if (p.kind === 'pickup') {
-            const color = colorForKey(String(p.license_plate || p.vehicleId || ''));
+            // const color = colorForKey(String(p.license_plate || p.vehicleId || ''));
+            const color = colorFromType(p.type);
             const html = `<div class="pickup-label" style="background:${color}">${p.seq ?? ''}</div>`;
             return L.marker(latlng, {
               pane: 'pane-routes',
@@ -297,7 +309,7 @@
   }
 
   function applyFleetDim() {
-    console.log('applyFleetDim');
+    // console.log('applyFleetDim');
     const selected = getSelectedVehicleIdsSet();
     const anySelected = selected.size > 0;
     // If there are selections: dim those NOT selected.
@@ -363,7 +375,8 @@
         const p = f.properties || {};
         const id = String(p.id || '');
         const plate = String(p.license_plate || '—');
-        const chipColor = colorForKey(plate || id);
+        // const chipColor = colorForKey(plate || id);
+        const chipColor = colorFromType(p.type);
 
         const row = document.createElement('label');
         row.className = 'veh-item';

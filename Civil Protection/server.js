@@ -294,7 +294,7 @@ app.use(helmet({
       "script-src": ["'self'", "https://unpkg.com", "'unsafe-inline'"],
       "style-src":  ["'self'", "https://unpkg.com", "'unsafe-inline'"],
       "img-src":    ["'self'", "data:", "https://*.tile.openstreetmap.org", "https://unpkg.com"],
-      "connect-src": ["'self'"]
+      "connect-src": ["'self'", "https://unpkg.com"]
     }
   }
 }));
@@ -658,7 +658,7 @@ async function loadFleetFeatures() {
     const totalSeats    = Number(e.totalSeats ?? 0);
     const occupiedSeats = Number(e.occupiedSeats ?? e.crew ?? 0);
     const availableSeats = Math.max(0, totalSeats - occupiedSeats);
-
+    console.log("type",e.type)
     features.push({
       type: 'Feature',
       geometry: { type: 'Point', coordinates: coords },
@@ -672,6 +672,8 @@ async function loadFleetFeatures() {
       }
     });
   }
+  console.log("features",features.length)
+  console.log(features[0])
   return features;
 }
 
@@ -759,12 +761,14 @@ app.post('/api/plan-routes', async (_req, res) => {
       });
     }
     console.log("Targets: " + targets.length);
-    // 2) Vehicles with capacity (ad hoc city via nearest center)
-    console.log(fleet[0], fleet[1])
-
+    for(let i = 0; i < targets.length; i++) {
+      console.log(targets[i].id + " " + targets[i].name + " " + targets[i].coord);
+    }
+    
     const vehiclesAll = fleet
       .map(v => ({
         id: v.properties.id,
+        type: v.properties.type,
         plate: v.properties.license_plate,
         start: v.geometry.coordinates,                 // [lon, lat]
         seatsLeft: Number(v.properties.availableSeats ?? 0),
@@ -867,6 +871,7 @@ app.post('/api/plan-routes', async (_req, res) => {
         geometry,
         properties: {
           kind: 'route',
+          type: v.type,
           vehicleId: v.id,
           license_plate: v.plate,
           city: v.city,
@@ -885,6 +890,7 @@ app.post('/api/plan-routes', async (_req, res) => {
           geometry: { type: 'Point', coordinates: o.coord },
           properties: {
             kind: 'pickup',
+            type: v.type,
             vehicleId: v.id,
             license_plate: v.plate,
             city: v.city,
