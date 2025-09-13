@@ -2,3 +2,6 @@ CertificateAuthority/__pycache__/
 node_modules/
 "Civil Protection/.env"
 Civil Protection/.env
+Civil Protection/.env
+*.env
+Civil Protection/route-opt-key.json

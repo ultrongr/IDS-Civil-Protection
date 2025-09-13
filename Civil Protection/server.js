@@ -9,6 +9,8 @@ import fs from 'fs';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import { fileURLToPath } from 'url';
+import { GoogleAuth } from 'google-auth-library';
+
 
 // ----------------- Paths & config -----------------
 const __filename = fileURLToPath(import.meta.url);
@@ -24,6 +26,10 @@ const ORION_URL             = ORION_BASE.replace(/\/$/, '') + '/v2/entities';
 const FIWARE_SERVICE_PATH   = process.env.FIWARE_SERVICE_PATH || '/up1083865/thesis/Vehicles';
 const FIWARE_SERVICE_TENANT = process.env.FIWARE_SERVICE_TENANT || undefined;
 const BASE_ENTITY_ID_PREFIX = process.env.BASE_ENTITY_ID_PREFIX || 'urn:ngsi-ld:Vehicle:CIV';
+
+const ROUTE_OPTIMIZATION_ENDPOINT =
+  process.env.ROUTE_OPTIMIZATION_ENDPOINT || 'routeoptimization.googleapis.com';
+const GOOGLE_PROJECT = process.env.GOOGLE_PROJECT;
 
 // --- City partitioning ---
 const CITY_CENTERS = {
@@ -282,6 +288,40 @@ async function basicAuth(req, res, next) {
   }
   return next();
 }
+
+// ---------- Google Route Optimization helpers ----------
+async function getGcpAccessToken() {
+  const auth = new GoogleAuth({ scopes: ['https://www.googleapis.com/auth/cloud-platform'] });
+  const client = await auth.getClient();
+  const at = await client.getAccessToken();
+  return typeof at === 'string' ? at : at?.token;
+}
+
+/**
+ * @param {object} model ShipmentModel { vehicles[], shipments[], ... }
+ * @returns {object|null} OptimizeToursResponse
+ */
+async function optimizeTours(model) {
+  if (!GOOGLE_PROJECT) {
+    console.warn('GOOGLE_PROJECT not set; skipping optimization');
+    return null;
+  }
+  const url = `https://${ROUTE_OPTIMIZATION_ENDPOINT}/v1/projects/${encodeURIComponent(GOOGLE_PROJECT)}:optimizeTours`;
+
+  try {
+    const token = await getGcpAccessToken();
+    const r = await axios.post(
+      url,
+      { model }, // you can add optional knobs here
+      { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, timeout: 30000 }
+    );
+    return r.data || null;
+  } catch (e) {
+    console.warn('OptimizeTours failed:', e.response?.status, e.response?.data || e.message);
+    return null;
+  }
+}
+
 
 // ----------------- App -----------------
 const app = express();
@@ -825,40 +865,183 @@ app.post('/api/plan-routes', async (_req, res) => {
     cityTargets[c].push(t);
     }
 
-    // 2b) Per-city greedy assignment using OSRM durations (smaller matrices)
-    for (const city of cityNames) {
-    const vList = cityVehicles[city];
-    const tList = cityTargets[city];
-    if (!vList?.length || !tList?.length) continue;
+    
+    // 2) Global assignment & sequencing via Google Route Optimization (capacity-aware)
+    //    Falls back to a single global greedy OSRM-table assignment if OptimizeTours returns nothing.
 
-    const table = await osrmTable(
-        vList.map(v => v.start),
-        tList.map(t => t.coord)
-    );
-    const durations = table?.durations; // shape: vList x tList
+    // Helper to convert [lon,lat] -> {latitude, longitude}
+    const toLatLng = ([lon, lat]) => ({ latitude: lat, longitude: lon });
 
-    const unassigned = new Set(tList.map((_, i) => i));
-    while (unassigned.size && vList.some(v => v.seatsLeft > 0)) {
-        let bestVI = -1, bestTI = -1, bestScore = Infinity;
-        for (let vi = 0; vi < vList.length; vi++) {
-        if (vList[vi].seatsLeft <= 0) continue;
-        for (const ti of unassigned) {
-            let score;
-            if (durations && durations[vi] && Number.isFinite(durations[vi][ti])) {
-            score = durations[vi][ti]; // seconds
-            } else {
-            score = haversineKm(vList[vi].start, tList[ti].coord); // fallback
-            }
-            if (score < bestScore) { bestScore = score; bestVI = vi; bestTI = ti; }
+    // ---- Build the ShipmentModel (correct shapes; integers for loads) ----
+    const vehiclesModel = vehiclesAll.map((v) => ({
+      name: `veh-${v.id}`,
+      startLocation: toLatLng(v.start),
+      // endLocation: toLatLng(v.start), // optional; add if vehicles must return
+      loadLimits: {
+        seats: { maxLoad: Math.max(0, Number(v.seatsLeft) || 0) }  // map, not array
+      }
+      // optional: costPerKilometer, costPerHour, time windows...
+    }));
+
+    const shipmentsModel = targets.map((t, idx) => ({
+      name: `t-${t.id || idx}`,
+      pickups: [{
+        arrivalLocation: toLatLng(t.coord),
+        loadDemands: { seats: { amount: 1 } }                      // map, not array
+        // optional: serviceDuration: "300s", timeWindows: [...]
+      }]
+    }));
+
+    const model = { vehicles: vehiclesModel, shipments: shipmentsModel };
+    const solved = await optimizeTours(model);
+
+    // clear any previous picks
+    for (const v of vehiclesAll) v.picks = [];
+
+    if (solved?.routes?.length) {
+      console.log('[CFR] routes=', solved.routes.length,
+                  'skipped=', solved.skippedShipments?.length || 0);
+      console.log(solved.routes)
+
+      const byIndex = targets; // direct array access for shipmentIndex
+      const byLabel = new Map(targets.map((t, i) => [`t-${t.id || i}`, t]));
+
+      
+      // ===== BEGIN CFR mapping patch (robust + safety fallback) =====
+
+      // Clear picks
+      for (const v of vehiclesAll) v.picks = [];
+
+      // Build resolvers
+      const vehicleByIndex = new Map(vehiclesModel.map((vm, i) => [i, vehiclesAll[i]]));
+      const vehicleByName  = new Map(vehiclesModel.map((vm, i) => [vm.name, vehiclesAll[i]]));
+
+      const shipmentByIndex = new Map(shipmentsModel.map((sm, i) => [i, targets[i]]));
+      const shipmentByName  = new Map(shipmentsModel.map((sm, i) => [sm.name, targets[i]]));
+
+      // Reverse map: target reference -> original index (so we can mark assigned fast)
+      const targetIndexByRef = new Map(targets.map((t, i) => [t, i]));
+
+      // Helper: extract shipment from a Visit no matter how it's shaped
+      function getShipmentFromVisit(visit) {
+        if (Number.isInteger(visit?.shipmentIndex)) return shipmentByIndex.get(visit.shipmentIndex);
+        if (visit?.shipmentLabel) return shipmentByName.get(visit.shipmentLabel);
+        // Defensive fallbacks sometimes seen in responses:
+        const idx =
+          Number.isInteger(visit?.requestIndex) ? visit.requestIndex :
+          Number.isInteger(visit?.visitRequestIndex) ? visit.visitRequestIndex :
+          (Array.isArray(visit?.shipmentIndices) && Number.isInteger(visit.shipmentIndices[0]) ? visit.shipmentIndices[0] : undefined);
+        if (Number.isInteger(idx)) return shipmentByIndex.get(idx);
+        return undefined;
+      }
+
+      let totalAssigned = 0;
+      const assignedShipmentIdx = new Set();
+
+      solved.routes.forEach((route, ri) => {
+        // Resolve vehicle by name -> index -> label -> ROUTE ARRAY INDEX (last resort)
+        let veh = null;
+        if (route.vehicle && vehicleByName.has(route.vehicle)) {
+          veh = vehicleByName.get(route.vehicle);
+        } else if (Number.isInteger(route.vehicleIndex) && vehicleByIndex.has(route.vehicleIndex)) {
+          veh = vehicleByIndex.get(route.vehicleIndex);
+        } else if (route.vehicleLabel && vehicleByName.has(route.vehicleLabel)) {
+          veh = vehicleByName.get(route.vehicleLabel);
+        } else if (vehicleByIndex.has(ri)) {
+          veh = vehicleByIndex.get(ri);
         }
+
+        if (!veh) {
+          console.warn('[CFR] Could not resolve vehicle for route', { ri, vehicle: route.vehicle, vehicleIndex: route.vehicleIndex });
+          return;
+        }
+
+        const ordered = [];
+        for (const visit of (route.visits || [])) {
+          const s = getShipmentFromVisit(visit);
+          if (!s) continue;
+
+          const idx = targetIndexByRef.get(s);
+          if (Number.isInteger(idx)) assignedShipmentIdx.add(idx);
+
+          ordered.push(s);
+        }
+
+        veh.picks = ordered;
+        totalAssigned += ordered.length;
+        veh.seatsLeft = Math.max(0, Number(veh.seatsLeft) - ordered.length);
+      });
+
+      console.log('[CFR] assigned targets (pre-fallback):', totalAssigned, 'of', targets.length);
+
+      // ---- Safety net: attach any missing shipments to nearest vehicle with capacity ----
+      if (assignedShipmentIdx.size < shipmentsModel.length) {
+        const missing = [];
+        for (let i = 0; i < shipmentsModel.length; i++) {
+          if (!assignedShipmentIdx.has(i)) missing.push(i);
+        }
+        if (missing.length) {
+          console.warn('[CFR] Missing shipments after mapping:', missing.length);
+          for (const mi of missing) {
+            const t = shipmentByIndex.get(mi);
+            if (!t) continue;
+
+            let bestV = null, bestScore = Infinity;
+            for (const v of vehiclesAll) {
+              if ((v.seatsLeft || 0) <= 0) continue;
+              const score = haversineKm(v.start, t.coord);
+              if (score < bestScore) { bestScore = score; bestV = v; }
+            }
+            if (bestV) {
+              bestV.picks.push(t);
+              bestV.seatsLeft = Math.max(0, Number(bestV.seatsLeft) - 1);
+              totalAssigned += 1;
+              console.log(`[CFR] Greedy-attached missing target "${t.name}" to vehicle ${bestV.id}`);
+            } else {
+              console.warn('[CFR] No vehicle has capacity for missing target:', t?.name);
+            }
+          }
+        }
+      }
+
+      console.log('[CFR] assigned targets (final):', totalAssigned, 'of', targets.length);
+
+      // ===== END CFR mapping patch =====
+
+
+
+    } else {
+      console.warn('[CFR] No routes returned; using global greedy fallback');
+
+      const table = await osrmTable(
+        vehiclesAll.map(v => v.start),
+        targets.map(t => t.coord)
+      );
+      const durations = table?.durations; // shape: vehiclesAll x targets
+
+      const unassigned = new Set(targets.map((_, i) => i));
+      while (unassigned.size && vehiclesAll.some(v => v.seatsLeft > 0)) {
+        let bestVI = -1, bestTI = -1, bestScore = Infinity;
+        for (let vi = 0; vi < vehiclesAll.length; vi++) {
+          if (vehiclesAll[vi].seatsLeft <= 0) continue;
+          for (const ti of unassigned) {
+            const score = (durations && durations[vi] && Number.isFinite(durations[vi][ti]))
+              ? durations[vi][ti]
+              : haversineKm(vehiclesAll[vi].start, targets[ti].coord); // fallback
+            if (score < bestScore) { bestScore = score; bestVI = vi; bestTI = ti; }
+          }
         }
         if (bestVI === -1) break;
-        vList[bestVI].picks.push(tList[bestTI]);
-        vList[bestVI].seatsLeft -= 1;
+        vehiclesAll[bestVI].picks.push(targets[bestTI]);
+        vehiclesAll[bestVI].seatsLeft -= 1;
         unassigned.delete(bestTI);
+      }
     }
-    }
-    console.log(`Greedy planning (per-city nearest-center) took ${Date.now() - time1} ms`);
+
+
+
+
+    console.log(`Planning (Route Optimization + fallback) took ${Date.now() - time1} ms`);
 
 
     // 3) Build a route per vehicle using nearest-neighbor order, then OSRM route
@@ -866,7 +1049,7 @@ app.post('/api/plan-routes', async (_req, res) => {
     for (const v of vehiclesAll) {
       if (!v.picks.length) continue;
 
-      const order = nearestNeighborRoute(v.start, v.picks);         // returns [{coord, name, ...}, ...]
+      const order = v.picks;
       const orderedCoords = [v.start, ...order.map(o => o.coord)];  // [[lon,lat],...]
 
       // Try OSRM first
@@ -927,6 +1110,7 @@ app.post('/api/plan-routes', async (_req, res) => {
 
     const time2 = Date.now();
     console.log(`plan-routes: ${time2 - time1} ms, ${features.length} routes`);
+    
     return res.json({
       type: 'FeatureCollection',
       features,
