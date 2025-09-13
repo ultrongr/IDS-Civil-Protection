@@ -720,6 +720,28 @@ async function loadActiveDisasterGeometries() {
   return geoms;
 }
 
+function buildGmapsDirUrl(orderedCoords) {
+  // orderedCoords is [[lon,lat], [lon,lat], ...] where 0 = start, last = final stop(s)
+  if (!Array.isArray(orderedCoords) || orderedCoords.length < 2) return null;
+
+  const toLatLng = ([lon, lat]) => `${lat},${lon}`;
+
+  const origin = toLatLng(orderedCoords[0]);
+  const destination = toLatLng(orderedCoords[orderedCoords.length - 1]);
+
+  const waypointsArr = orderedCoords.slice(1, -1).map(toLatLng); // everything between
+  const waypoints = waypointsArr.join('|');
+
+  const url = new URL('https://www.google.com/maps/dir/');
+  url.searchParams.set('api', '1');
+  url.searchParams.set('origin', origin);
+  url.searchParams.set('destination', destination);
+  if (waypointsArr.length) url.searchParams.set('waypoints', waypoints);
+  url.searchParams.set('travelmode', 'driving');
+  return url.toString();
+}
+
+
 // ---- planner endpoint (OSRM-backed) ----
 app.post('/api/plan-routes', async (_req, res) => {
   try {
@@ -864,6 +886,8 @@ app.post('/api/plan-routes', async (_req, res) => {
         distanceKm = Number(totalKm.toFixed(2));
         durationMin = undefined;
       }
+      const directionsUrl = buildGmapsDirUrl(orderedCoords);
+      console.log(`Directions for ${v.id}: ${directionsUrl}`);
 
       // Route feature
       features.push({

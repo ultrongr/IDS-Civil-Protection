@@ -253,7 +253,7 @@ app.get('/api/ids/data', bearerAuth, async (req, res) => {
     const ameas = await Amea.find();
     ameas.forEach(amea => amea.decryptFieldsSync())
     const clean = ameas.map(amea => amea.toObject());
-    console.log(clean[0])
+
     const plaintext = JSON.stringify(clean);
 
     const encrypted = encryptUtf8(plaintext);
