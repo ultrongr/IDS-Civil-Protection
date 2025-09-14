@@ -10,6 +10,8 @@ import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import { fileURLToPath } from 'url';
 import { GoogleAuth } from 'google-auth-library';
+import nodemailer from 'nodemailer';
+
 
 
 // ----------------- Paths & config -----------------
@@ -51,6 +53,14 @@ const ROUTING_BASE = process.env.ROUTING_BASE || 'https://router.project-osrm.or
 
 // ----------------- Axios agent (self-signed) -----------------
 const httpsAgent = INSECURE_TLS ? new https.Agent({ rejectUnauthorized: false }) : undefined;
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.GMAIL_USER, // your Gmail address
+    pass: process.env.GMAIL_PASS, // the 16-char app password
+  },
+});
 
 // ----------------- Helpers -----------------
 function ensureDir(d) { if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true }); }
@@ -702,6 +712,7 @@ async function loadFleetFeatures() {
     features.push({
       type: 'Feature',
       geometry: { type: 'Point', coordinates: coords },
+      email: e.contactPoint?.email,
       properties: {
         id: e.id,
         license_plate: e.license_plate ?? '-',
@@ -781,6 +792,16 @@ function buildGmapsDirUrl(orderedCoords) {
   return url.toString();
 }
 
+async function sendRouteEmail(vehicleId, directionsUrl, recipient) {
+  await transporter.sendMail({
+    from: `"Route Planner" <${process.env.GMAIL_USER}>`,
+    to: recipient,
+    subject: `Directions for vehicle ${vehicleId}`,
+    text: `Vehicle ${vehicleId} route: ${directionsUrl}`,
+    html: `<p>Vehicle <b>${vehicleId}</b> route:</p><p><a href="${directionsUrl}">${directionsUrl}</a></p>`,
+  });
+}
+
 
 // ---- planner endpoint (OSRM-backed) ----
 app.post('/api/plan-routes', async (_req, res) => {
@@ -826,10 +847,11 @@ app.post('/api/plan-routes', async (_req, res) => {
     for(let i = 0; i < targets.length; i++) {
       console.log(targets[i].id + " " + targets[i].name + " " + targets[i].coord);
     }
-    
+
     const vehiclesAll = fleet
       .map(v => ({
         id: v.properties.id,
+        email: v.email,
         type: v.properties.type,
         plate: v.properties.license_plate,
         start: v.geometry.coordinates,                 // [lon, lat]
@@ -901,7 +923,7 @@ app.post('/api/plan-routes', async (_req, res) => {
     if (solved?.routes?.length) {
       console.log('[CFR] routes=', solved.routes.length,
                   'skipped=', solved.skippedShipments?.length || 0);
-      console.log(solved.routes)
+      // console.log(solved.routes)
 
       const byIndex = targets; // direct array access for shipmentIndex
       const byLabel = new Map(targets.map((t, i) => [`t-${t.id || i}`, t]));
@@ -1071,6 +1093,11 @@ app.post('/api/plan-routes', async (_req, res) => {
       }
       const directionsUrl = buildGmapsDirUrl(orderedCoords);
       console.log(`Directions for ${v.id}: ${directionsUrl}`);
+
+      if(v.email && !v.email.includes("test")){
+        await sendRouteEmail(v.id, directionsUrl, v.email);
+      }
+      // await sendRouteEmail(v.id, directionsUrl, v.email);
 
       // Route feature
       features.push({

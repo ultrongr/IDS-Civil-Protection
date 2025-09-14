@@ -274,6 +274,7 @@ class VehicleFleetSimulator:
         self.num_vehicles = 10
         self.vehicles: List[Dict] = []
         self.road_manager = RoadNetworkManager()
+        self.seeded_mails = ["ktsambras@gmail.com", "ktsambras@gmail.com"]
 
         # Load ONLY Patras roads (as per CITY_WEIGHTS)
         print("🛣️  Loading road network by city (Patras)...")
@@ -348,6 +349,11 @@ class VehicleFleetSimulator:
 
     def generate_phone_number(self) -> str:
         return f"+30-{random.randint(210, 299)}-{random.randint(1000000, 9999999)}"
+    
+    def generate_email(self) -> str:
+        if len(self.seeded_mails) > 0:
+            return self.seeded_mails.pop(0)
+        return f"test-{random.randint(1000, 9999)}@test.com"
 
     def get_vehicle_capacity(self, vehicle_type: str) -> Dict[str, int]:
         capacities = {
@@ -415,8 +421,8 @@ class VehicleFleetSimulator:
             "contactPoint": {
                 "type": "StructuredValue",
                 "value": {
-                    "telephone": self.generate_phone_number(),
-                    "contactType": random.choice(CONTACT_TYPES)
+                    "email": self.generate_email(),
+                    "contactType": "email",
                 }
             },
 
