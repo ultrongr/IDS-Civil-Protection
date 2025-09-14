@@ -54,7 +54,9 @@ function mapMemberRow(r) {
     floor: dec(r.floor),
     latitude: r.latitude,
     longitude: r.longitude,
-    disabilityPct: r.disabilityPct
+    disabilityPct: r.disabilityPct,
+    disabilities: r.disabilities,
+    disabilitiesDesc: r.disabilityDescriptions
   };
 }
 
@@ -267,7 +269,17 @@ app.get('/docs.json', (_req, res) => res.json(swaggerSpec));
  */
 app.get('/api/ameaclub/members', bearerAuth, async (_req, res) => {
   try {
-    const rows = await all('SELECT * FROM members ORDER BY id');
+    // const rows = await all('SELECT * FROM members ORDER BY id');
+    const rows = await all(`
+      SELECT 
+        m.*,
+        GROUP_CONCAT(d.type, ', ') AS disabilities,
+        GROUP_CONCAT(d.features, ' || ') AS disabilityDescriptions
+      FROM members m
+      LEFT JOIN disabilities d ON m.id = d.memberId
+      GROUP BY m.id
+      ORDER BY m.id
+    `);
     const payload = JSON.stringify(rows.map(mapMemberRow));
     const encrypted = encryptUtf8(payload);
     res.set('Cache-Control', 'no-store');

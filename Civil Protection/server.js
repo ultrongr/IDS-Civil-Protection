@@ -646,7 +646,124 @@ function nearestNeighborRoute(startCoord, stops) {
   return order;
 }
 
-// ---- reuse your existing fetching logic as functions ----
+// Canonical labels (handles BOTH "MOBILITY, OTHER" and ['mobility_impairment'])
+const DISABILITY_LABEL = {
+  mobility: 'Mobility impairment',
+  mobility_impairment: 'Mobility impairment',
+  MOBILITY: 'Mobility impairment',
+
+  vision: 'Vision impairment',
+  visual_impairment: 'Vision impairment',
+  VISION: 'Vision impairment',
+
+  hearing: 'Hearing impairment',
+  hearing_impairment: 'Hearing impairment',
+  HEARING: 'Hearing impairment',
+
+  intellectual: 'Intellectual disability',
+  intellectual_disability: 'Intellectual disability',
+  INTELLECTUAL: 'Intellectual disability',
+
+  autism: 'Autism spectrum',
+  autism_spectrum: 'Autism spectrum',
+  AUTISM: 'Autism spectrum',
+
+  chronic_pain: 'Chronic pain / limited mobility',
+  CHRONIC_PAIN: 'Chronic pain / limited mobility',
+
+  respiratory_condition: 'Respiratory condition',
+  RESPIRATORY_CONDITION: 'Respiratory condition',
+
+  other: 'Other',
+  OTHER: 'Other',
+};
+
+// Human phrases for boolean flags
+const REQ_PHRASE = {
+  ramp: 'Ramp access',
+  elevator: 'Elevator access',
+  captions: 'Captions available',
+  signLanguage: 'Sign language support',
+  simpleLanguage: 'Simplified, step-by-step instructions',
+  quietRoom: 'Quiet room available',
+  braille: 'Braille materials',
+  audioGuides: 'Audio guides',
+};
+
+function normalizeDisabilities(raw) {
+  let list = [];
+  if (Array.isArray(raw)) list = raw.slice();
+  else if (typeof raw === 'string') list = raw.split(',').map(s => s.trim()).filter(Boolean);
+  else if (raw != null) list = [String(raw)];
+  const out = new Set();
+  for (const it of list) {
+    const key = String(it).trim();
+    const label = DISABILITY_LABEL[key] || DISABILITY_LABEL[key.toLowerCase()] || DISABILITY_LABEL[key.toUpperCase()];
+    if (label) out.add(label);
+  }
+  return [...out];
+}
+
+function normalizeDescriptions(raw) {
+  const out = [];
+  const addObj = (o) => {
+    for (const [k, v] of Object.entries(o || {})) {
+      if (k === 'notes' && typeof v === 'string' && v.trim()) out.push(v.trim());
+      else if (typeof v === 'boolean' && v) out.push(REQ_PHRASE[k] || k);
+      else if (typeof v === 'string' && v.trim() && k !== 'notes') out.push(`${REQ_PHRASE[k] || k}: ${v.trim()}`);
+    }
+  };
+  const parsePiece = (s) => {
+    const t = s.trim();
+    if (!t) return;
+    if ((t.startsWith('{') && t.endsWith('}')) || (t.startsWith('[') && t.endsWith(']'))) {
+      try {
+        const j = JSON.parse(t);
+        if (Array.isArray(j)) j.forEach(x => (typeof x === 'object' ? addObj(x) : out.push(String(x))));
+        else if (typeof j === 'object') addObj(j);
+        else out.push(String(j));
+      } catch { out.push(t); }
+    } else {
+      out.push(t);
+    }
+  };
+  if (raw == null) return out;
+  if (typeof raw === 'string') {
+    (raw.includes('||') ? raw.split('||') : [raw]).forEach(parsePiece);
+  } else if (Array.isArray(raw)) {
+    raw.forEach(x => (typeof x === 'string' ? parsePiece(x) : addObj(x)));
+  } else if (typeof raw === 'object') {
+    addObj(raw);
+  } else {
+    out.push(String(raw));
+  }
+  // dedupe preserve order
+  return [...new Set(out)];
+}
+
+// Returns a single plain-text block (no HTML)
+function formatDisabilityText(d) {
+  const types = normalizeDisabilities(d.disabilities);
+  const descRaw = d.disabilitiesDesc ?? d.disabilityDescriptions;
+  const needs = normalizeDescriptions(descRaw);
+
+  // If "Other" is the only type and there are no needs, hide it
+  const filteredTypes =
+    types.length === 1 && types[0] === 'Other' && needs.length === 0
+      ? []
+      : types;
+
+  const lines = [];
+  if (filteredTypes.length) lines.push(`Disabilities: ${filteredTypes.join('; ')}`);
+  if (needs.length) {
+    lines.push('Accessibility needs:');
+    needs.forEach(n => lines.push(` - ${n}`));
+  }
+  return lines.join('\n');
+}
+
+
+
 async function loadAmeaFeatures() {
   const sources = PROVIDERS.filter(p =>
     ['amea','ameaclub'].includes(p.service) ||
@@ -682,11 +799,17 @@ async function loadAmeaFeatures() {
     const email = typeof d.email === 'string' ? d.email : d.email?.value;
     const phone = d.phone ?? d.phoneNumber?.value ?? d.landNumber?.value;
 
+
+    const textBlock = formatDisabilityText(d);
+    console.log(textBlock)
+    // console.log(d)
     features.push({
       type: 'Feature',
       geometry: { type: 'Point', coordinates: [lon, lat] },
       properties: {
         id: String(d._id ?? d.id ?? ''),
+        disability_info: textBlock,
+
         name: (typeof d.name === 'string' && !d.name.includes(':')) ? d.name : (d.region?.municipality ? `AMEA — ${d.region.municipality}` : 'AMEA'),
         disabilityPct: d.disabilityPct ?? d.disability_percent ?? undefined,
         phone, email
@@ -792,13 +915,19 @@ function buildGmapsDirUrl(orderedCoords) {
   return url.toString();
 }
 
-async function sendRouteEmail(vehicleId, directionsUrl, recipient) {
+async function sendRouteEmail(vehicleId, directionsUrl, recipient, stopsInfo) {
+  let _text = `Vehicle ${vehicleId} route: ${directionsUrl}`
+  let counter = 0;
+  for (const stop of stopsInfo) {
+    _text += `\n\nStop #${counter++}: ${stop.name}`;
+    _text += `\n${stop.disability_info}\n`;
+  }
+
   await transporter.sendMail({
     from: `"Route Planner" <${process.env.GMAIL_USER}>`,
     to: recipient,
     subject: `Directions for vehicle ${vehicleId}`,
-    text: `Vehicle ${vehicleId} route: ${directionsUrl}`,
-    html: `<p>Vehicle <b>${vehicleId}</b> route:</p><p><a href="${directionsUrl}">${directionsUrl}</a></p>`,
+    text: _text,
   });
 }
 
@@ -813,6 +942,7 @@ app.post('/api/plan-routes', async (_req, res) => {
       loadFleetFeatures(), 
       loadActiveDisasterGeometries()
     ]);
+    console.log("AMEA: " + amea.length);
 
     if (!fleet.length || !geoms.length) {
       return res.json({
@@ -831,7 +961,9 @@ app.post('/api/plan-routes', async (_req, res) => {
         targets.push({
           id: f.properties?.id || '',
           name: f.properties?.name || 'AMEA',
-          coord: c
+          coord: c,
+          disability_info: f.properties?.disability_info || '',
+          phone: f.properties?.phone || ''
         });
       }
     }
@@ -1095,9 +1227,9 @@ app.post('/api/plan-routes', async (_req, res) => {
       console.log(`Directions for ${v.id}: ${directionsUrl}`);
 
       if(v.email && !v.email.includes("test")){
-        await sendRouteEmail(v.id, directionsUrl, v.email);
+        await sendRouteEmail(v.id, directionsUrl, v.email, order);
       }
-      // await sendRouteEmail(v.id, directionsUrl, v.email);
+      
 
       // Route feature
       features.push({
