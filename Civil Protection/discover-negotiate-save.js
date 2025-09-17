@@ -149,6 +149,39 @@ async function normalizePayload(payload) {
   return payload;
 }
 
+function extractAccessUrlsFromConnector(c, byId) {
+  const endpoints = (c['ids:hasDefaultEndpoint'] ?? c.hasDefaultEndpoint);
+  const epRefs = Array.isArray(endpoints) ? endpoints : (endpoints ? [endpoints] : []);
+  const urls = new Set();
+
+  for (const epRef of epRefs) {
+    const epId = typeof epRef === 'string' ? epRef : epRef?.['@id'];
+    const epNode = (epId && byId[epId]) || epRef || {};
+    const access = epNode['ids:accessURL'] ?? epNode.accessURL;
+
+    const add = (v) => {
+      if (!v) return;
+      if (typeof v === 'string') urls.add(v);
+      else if (typeof v === 'object' && v['@id']) urls.add(v['@id']);
+    };
+
+    if (Array.isArray(access)) access.forEach(add);
+    else add(access);
+  }
+  return [...urls];
+}
+
+function pickPublicUrl(arr) {
+  const scored = arr.map(u => {
+    try {
+      const { protocol, hostname } = new URL(u);
+      const score = (protocol === 'https:' ? 2 : 0) + (/\./.test(hostname) ? 1 : 0);
+      return { u, score };
+    } catch { return { u, score: -1 }; }
+  }).sort((a,b)=>b.score-a.score);
+  return scored[0]?.u;
+}
+
 // ---------- Core flow ----------
 (async () => {
   const runStamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -191,16 +224,15 @@ async function normalizePayload(payload) {
 
     const connectors = graph.filter(n => n['@type'] === 'ids:BaseConnector');
     const results = connectors.map(c => {
-      const epId = c.hasDefaultEndpoint;
-      const accessURL = byId[epId]?.accessURL || null;
-      const catalog = byId[c.resourceCatalog]?.sameAs || c.resourceCatalog;
+      const urls = extractAccessUrlsFromConnector(c, byId);
+      const chosen = pickPublicUrl(urls);
       return {
         connectorId: c['@id'],
-        sameAs: c.sameAs,
-        accessURL,
-        catalogSameAs: catalog,
+        sameAs: c['ids:sameAs'] ?? c.sameAs,
+        accessURLs: urls,
+        accessURL: chosen
       };
-    }).filter(x => !!x.accessURL);
+    }).filter(r => r.accessURL);
 
     accessUrls = new Set(results.map(r => r.accessURL));
     console.log(`   • Connector access URLs discovered: ${accessUrls.size}`);
@@ -222,6 +254,7 @@ async function normalizePayload(payload) {
 
   // Iterate providers
   for (const baseUrl of accessUrls) {
+    // console.log(accessUrls)
     const recipient = `${baseUrl.replace(/\/+$/, '')}`;
     const providerSlug = slugify(baseUrl);
     console.log(`\n📡 Provider: ${baseUrl}`);
@@ -358,7 +391,7 @@ async function normalizePayload(payload) {
             dataLink,
             savedAt: new Date().toISOString(),
           };
-          writeJson(metaPath, meta);
+          // writeJson(metaPath, meta);
           writeJson(dataPath, payload);
 
           console.log(`   💾 Saved RAW: ${path.relative(__dirname, dataPath)}  (meta: ${path.relative(__dirname, metaPath)})`);
@@ -388,7 +421,7 @@ async function normalizePayload(payload) {
   // Write run summary
   runSummary.finishedAt = new Date().toISOString();
   const summaryPath = path.join(outDir, `run-summary.json`);
-  writeJson(summaryPath, runSummary);
+  // writeJson(summaryPath, runSummary);
 
   console.log('\n✅ Done.');
   console.log(`📁 Output dir: ${outDir}`);
