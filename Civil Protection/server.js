@@ -322,7 +322,8 @@ async function optimizeTours(model) {
     const token = await getGcpAccessToken();
     const r = await axios.post(
       url,
-      { model }, // you can add optional knobs here
+      { model, searchMode: 'CONSUME_ALL_AVAILABLE_TIME' }, // you can add optional knobs here
+      
       { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, timeout: 30000 }
     );
     return r.data || null;
@@ -754,7 +755,7 @@ function formatDisabilityText(d) {
       : types;
 
   const lines = [];
-  if (filteredTypes.length) lines.push(`Disabilities: ${filteredTypes.join('; ')}`);
+  // if (filteredTypes.length) lines.push(`Disabilities: ${filteredTypes.join('; ')}`);
   if (needs.length) {
     lines.push('Accessibility needs:');
     needs.forEach(n => lines.push(` - ${n}`));
@@ -846,8 +847,7 @@ async function loadFleetFeatures() {
       }
     });
   }
-  console.log("features",features.length)
-  console.log(features[0])
+
   return features;
 }
 
@@ -942,7 +942,7 @@ app.post('/api/plan-routes', async (_req, res) => {
       loadFleetFeatures(), 
       loadActiveDisasterGeometries()
     ]);
-    console.log("AMEA: " + amea.length);
+    
 
     if (!fleet.length || !geoms.length) {
       return res.json({
@@ -976,9 +976,9 @@ app.post('/api/plan-routes', async (_req, res) => {
       });
     }
     console.log("Targets: " + targets.length);
-    for(let i = 0; i < targets.length; i++) {
-      console.log(targets[i].id + " " + targets[i].name + " " + targets[i].coord);
-    }
+    // for(let i = 0; i < targets.length; i++) {
+    //   console.log(targets[i].id + " " + targets[i].name + " " + targets[i].coord);
+    // }
 
     const vehiclesAll = fleet
       .map(v => ({
@@ -1007,7 +1007,7 @@ app.post('/api/plan-routes', async (_req, res) => {
         }
       });
     }
-    console.log("2a) Vehicles: " + vehiclesAll.length);
+    // console.log("2a) Vehicles: " + vehiclesAll.length);
     // 2a) Group vehicles and targets by city (Athens/Thessaloniki/Patras)
     const cityNames = Object.keys(CITY_CENTERS);
     const cityVehicles = Object.fromEntries(cityNames.map(c => [c, []]));
@@ -1033,7 +1033,8 @@ app.post('/api/plan-routes', async (_req, res) => {
       // endLocation: toLatLng(v.start), // optional; add if vehicles must return
       loadLimits: {
         seats: { maxLoad: Math.max(0, Number(v.seatsLeft) || 0) }  // map, not array
-      }
+      },
+      costPerKilometer: 1
       // optional: costPerKilometer, costPerHour, time windows...
     }));
 
@@ -1224,7 +1225,7 @@ app.post('/api/plan-routes', async (_req, res) => {
         durationMin = undefined;
       }
       const directionsUrl = buildGmapsDirUrl(orderedCoords);
-      console.log(`Directions for ${v.id}: ${directionsUrl}`);
+      
 
       if(v.email && !v.email.includes("test")){
         await sendRouteEmail(v.id, directionsUrl, v.email, order);

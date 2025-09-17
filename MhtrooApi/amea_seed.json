@@ -36,7 +36,7 @@
     "email": "maria.nikolaou@example.org",
     "phoneNumber": "+30 6903334455",
     "mandatoryCommunication": "phone",
-    "loc": { "type": "Point", "coordinates": [21.7317, 38.249496] },
+    "loc": { "type": "Point", "coordinates": [21.733988, 38.247700] },
     "region": { "administrative": "Western Greece", "municipality": "Patras" },
     "disabilities": ["hearing_impairment"],
     "disabilitiesDesc": "Uses hearing aids; prefers SMS communication.",

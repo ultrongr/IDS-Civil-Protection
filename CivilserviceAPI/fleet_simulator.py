@@ -328,7 +328,7 @@ class VehicleFleetSimulator:
         current_lon: float,
         current_lat: float,
         speed_kmh: float,
-        time_delta_seconds: float = 5,
+        time_delta_seconds: float = 15,
         city: Optional[str] = None
     ) -> Tuple[float, float]:
         """Move vehicle ~distance based on speed; bias to road points in the given city if provided."""

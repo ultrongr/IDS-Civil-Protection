@@ -49,6 +49,8 @@
           crossorigin=""></script>
   <script>
     // Map (SVG renderer; keep default)
+    let fleetLocked = false; // when true, do NOT refresh vehicle positions
+
     const map = L.map('map').setView([38.0, 23.7], 7);
     let selectedVehicleIds = new Set();
 
@@ -191,38 +193,46 @@
       }
     }
 
-    async function refreshAll() {
-      try {
-        fleetMarkers.clear();
-        const ts = Date.now();
-        const [disR, ameaR, fleetR] = await Promise.all([
-          fetch('/api/disasters?active=true&ts=' + ts, { cache: 'no-store' }),
-          fetch('/api/amea?ts=' + ts,                 { cache: 'no-store' }),
-          fetch('/api/fleet?ts=' + ts,                { cache: 'no-store' }),
-        ]);
-        const [disasters, amea, fleet] = await Promise.all([disR.json(), ameaR.json(), fleetR.json()]);
+async function refreshAll() {
+  try {
+    const ts = Date.now();
 
-        layers.disasters.clearLayers();
-        layers.amea.clearLayers();
-        layers.fleet.clearLayers();
-        lastBounds = L.latLngBounds([]);
+    // Fetch disasters + AMEA always; fetch fleet only if not locked
+    const [disR, ameaR, fleetR] = await Promise.all([
+      fetch('/api/disasters?active=true&ts=' + ts, { cache: 'no-store' }),
+      fetch('/api/amea?ts=' + ts,                 { cache: 'no-store' }),
+      fleetLocked ? null : fetch('/api/fleet?ts=' + ts, { cache: 'no-store' })
+    ]);
 
-        addFeatureCollection(disasters, 'disasters');
-        addFeatureCollection(amea,      'amea');
-        addFeatureCollection(fleet,     'fleet');
+    const [disasters, amea, fleet] = await Promise.all([
+      disR.json(),
+      ameaR.json(),
+      fleetLocked ? Promise.resolve(null) : fleetR.json()
+    ]);
 
-        // --- NEW: re-render the vehicle list in the control ---
-        renderVehicleList();
-        applyFleetDim();
-
-        if (!didInitialFit && lastBounds.isValid()) {
-          map.fitBounds(lastBounds.pad(0.1));
-          didInitialFit = true;
-        }
-      } catch (e) {
-        console.error('Failed to refresh layers', e);
-      }
+    layers.disasters.clearLayers();
+    layers.amea.clearLayers();
+    if (!fleetLocked) {
+      layers.fleet.clearLayers();
+      fleetMarkers.clear();
     }
+    lastBounds = L.latLngBounds([]);
+
+    addFeatureCollection(disasters, 'disasters');
+    addFeatureCollection(amea,      'amea');
+    if (!fleetLocked && fleet) addFeatureCollection(fleet, 'fleet');
+
+    renderVehicleList();
+    applyFleetDim();
+
+    if (!didInitialFit && lastBounds.isValid()) {
+      map.fitBounds(lastBounds.pad(0.1));
+      didInitialFit = true;
+    }
+  } catch (e) {
+    console.error('Failed to refresh layers', e);
+  }
+}
 
     // --- Routes drawing ---
     function clearRoutes() { layers.routes.clearLayers(); }
@@ -406,11 +416,22 @@
 
         const plan = L.DomUtil.create('button', '', div);
         plan.textContent = 'Plan pickups';
-        plan.onclick = (e) => { e.preventDefault(); planRoutes(); };
+        plan.onclick = (e) => { 
+          e.preventDefault(); 
+          fleetLocked = true;         // ⛔ stop updating vehicle positions
+          planRoutes(); 
+        };
+
 
         const clr = L.DomUtil.create('button', '', div);
         clr.textContent = 'Clear routes';
-        clr.onclick = (e) => { e.preventDefault(); clearRoutes(); };
+        clr.onclick = (e) => { 
+          e.preventDefault(); 
+          clearRoutes(); 
+          fleetLocked = false;        // ✅ resume updates
+          refreshAll();               // pull latest positions immediately
+        };
+
 
         // --- NEW: Vehicles list (inside same control) ---
         const wrap = L.DomUtil.create('div', 'veh-wrap', div);
