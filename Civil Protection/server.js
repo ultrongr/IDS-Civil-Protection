@@ -525,27 +525,43 @@ app.get('/api/disasters', async (_req, res) => {
       const r = await axios.get(p.endpoint, { httpsAgent, timeout: 20000 });
       let body = r.data;
 
-      // If provider already serves FeatureCollection, reuse it (filter active)
       if (body && body.type === 'FeatureCollection' && Array.isArray(body.features)) {
         for (const f of body.features) {
           if (!f || !f.geometry) continue;
           const props = f.properties || {};
           if (!isActive(props)) continue; // ✅ keep only active
+
           const { historicalAreasOfEffect, projectedAreasOfEffect, ...clean } = props;
+
+          // Main perimeter
           features.push({ type: 'Feature', geometry: f.geometry, properties: clean });
+
+          // Projected / evacuation areas (add as separate features)
+          if (Array.isArray(projectedAreasOfEffect)) {
+            console.log(projectedAreasOfEffect)
+            for (const g of projectedAreasOfEffect) {
+              if (g && g.type && g.coordinates) {
+                features.push({
+                  type: 'Feature',
+                  geometry: g,
+                  properties: { ...clean, kind: 'projected' }
+                });
+              }
+            }
+          }
         }
         return;
       }
 
-      // Otherwise treat it as an array of docs (filter active)
+      // ⬇️ define arr here
       const arr = Array.isArray(body) ? body : (body?.items || body?.results || body?.data || []);
+
       for (const d of arr) {
         const geom = d.areaOfEffect || d.geometry;
         if (!geom || !geom.type || !geom.coordinates) continue;
 
-        // Check activity off the raw doc to be robust
         if (!isActive({ startDate: d.startDate ?? d.startedAt ?? d.timestamp,
-                        endDate:   d.endDate   ?? d.endedAt })) continue; // ✅ only active
+                        endDate:   d.endDate   ?? d.endedAt })) continue;
 
         const {
           _id, __v, areaOfEffect,
@@ -553,18 +569,34 @@ app.get('/api/disasters', async (_req, res) => {
           ...props
         } = d;
 
+        const baseProps = {
+          id: String(_id ?? d.id ?? ''),
+          ...props,
+          historicalCount: Array.isArray(historicalAreasOfEffect) ? historicalAreasOfEffect.length : undefined,
+          projectedCount:  Array.isArray(projectedAreasOfEffect)  ? projectedAreasOfEffect.length  : undefined,
+        };
+
+        // Main perimeter
         features.push({
           type: 'Feature',
           geometry: geom,
-          properties: {
-            id: String(_id ?? d.id ?? ''),
-            ...props,
-            // counts (optional)
-            historicalCount: Array.isArray(historicalAreasOfEffect) ? historicalAreasOfEffect.length : undefined,
-            projectedCount:  Array.isArray(projectedAreasOfEffect)  ? projectedAreasOfEffect.length  : undefined,
-          }
+          properties: baseProps
         });
+
+        // Projected / evacuation areas
+        if (Array.isArray(projectedAreasOfEffect)) {
+          for (const g of projectedAreasOfEffect) {
+            if (g && g.type && g.coordinates) {
+              features.push({
+                type: 'Feature',
+                geometry: g,
+                properties: { ...baseProps, kind: 'projected' }
+              });
+            }
+          }
+        }
       }
+
     } catch (e) {
       console.warn(`disasters from ${p.endpoint} failed:`, e.response?.status || e.message);
     }
@@ -572,6 +604,7 @@ app.get('/api/disasters', async (_req, res) => {
 
   res.json({ type: 'FeatureCollection', features });
 });
+
 
 
 // ---- geometry helpers (point-in-polygon) ----
@@ -874,25 +907,50 @@ async function loadActiveDisasterGeometries() {
     try {
       const r = await axios.get(p.endpoint, { httpsAgent, timeout: 20000 });
       const body = r.data;
+
+      // Provider already serves a FeatureCollection
       if (body && body.type === 'FeatureCollection' && Array.isArray(body.features)) {
         for (const f of body.features) {
           if (!f || !f.geometry) continue;
           if (!isActive(f.properties || {})) continue;
+
+          // Main perimeter
           if (/Polygon/i.test(f.geometry.type)) geoms.push(f.geometry);
+
+          // ⬇️ Include evacuation (projected) areas
+          const proj = f.properties?.projectedAreasOfEffect;
+          if (Array.isArray(proj)) {
+            for (const g of proj) {
+              if (g && g.type && /Polygon/i.test(g.type)) geoms.push(g);
+            }
+          }
         }
         return;
       }
+
+      // Raw docs array
       const arr = Array.isArray(body) ? body : (body?.items || body?.results || body?.data || []);
       for (const d of arr) {
         if (!isActive({ startDate: d.startDate ?? d.startedAt ?? d.timestamp,
                         endDate:   d.endDate   ?? d.endedAt })) continue;
+
+        // Main perimeter
         const g = d.areaOfEffect || d.geometry;
-        if (g && /Polygon/i.test(g.type)) geoms.push(g);
+        if (g && g.type && /Polygon/i.test(g.type)) geoms.push(g);
+
+        // ⬇️ Include evacuation (projected) areas
+        const proj = d.projectedAreasOfEffect;
+        if (Array.isArray(proj)) {
+          for (const pg of proj) {
+            if (pg && pg.type && /Polygon/i.test(pg.type)) geoms.push(pg);
+          }
+        }
       }
     } catch {}
   }));
   return geoms;
 }
+
 
 function buildGmapsDirUrl(orderedCoords) {
   // orderedCoords is [[lon,lat], [lon,lat], ...] where 0 = start, last = final stop(s)

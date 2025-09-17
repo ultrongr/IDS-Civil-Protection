@@ -24,11 +24,21 @@ const Disaster = require('./models/Disaster');
 // node-fetch v3 is ESM; import dynamically for CommonJS
 const fetch = (...args) => import('node-fetch').then(({default: f}) => f(...args));
 
+let __turf = null;
+async function ensureTurf() {
+  if (__turf) return __turf;
+  const [{ default: buffer }, { default: cleanCoords }] = await Promise.all([
+    import('@turf/buffer'),
+    import('@turf/clean-coords').catch(() => ({ default: (g) => g })), // optional
+  ]);
+  __turf = { buffer, cleanCoords };
+  return __turf;
+}
 
 // config
 const CLEAR    = /^(1|true|yes)$/i.test(process.env.CLEAR ?? '1'); // default ON
 const PROVINCE = process.env.PROVINCE || 'Αχαΐα';
-const DATE_FROM = process.env.DATE_FROM || new Date(Date.now() - 30*24*3600e3).toISOString();
+const DATE_FROM = process.env.DATE_FROM || new Date(Date.now() - 100*24*3600e3).toISOString();
 const DATE_TO   = process.env.DATE_TO   || new Date().toISOString();
 const COUNTRY   = process.env.COUNTRY   || 'EL';
 const LIMIT     = Number(process.env.LIMIT || 9999);
@@ -157,7 +167,37 @@ async function fetchAll(url) {
   return out;
 }
 
-function toDisasterDoc(item) {
+async function makeEvacuationGeometry(geometry, meters = 500) {
+  const { buffer, cleanCoords } = await ensureTurf();
+
+  // Turf takes Features or Geometries; we wrap as a Feature
+  const feature = { type: 'Feature', geometry, properties: {} };
+
+  // Buffer outward by 0.5 km. 'steps' controls roundness of corners.
+  const buffered = buffer(feature, meters / 1000, { units: 'kilometers', steps: 16 });
+
+  // Clean up any tiny artifacts/self-intersections
+  const cleaned = cleanCoords(buffered);
+
+  // If you want ONLY the outside ring (evac zone excluding the burnt area),
+  // you could compute a ring with @turf/difference:
+  //   const { default: difference } = await import('@turf/difference');
+  //   const ring = difference(cleaned, feature);
+  //   return (ring || cleaned).geometry;
+
+  return cleaned.geometry;
+}
+
+function chooseDanger(areaHa) {
+  const a = Number(areaHa || 0);
+  if (a >= 1000) return 'extreme';
+  if (a >= 300) return 'high';
+  if (a >= 50) return 'moderate';
+  return 'low';
+}
+
+// CHANGE: make async
+async function toDisasterDoc(item) {
   const geometry = itemToGeoJSONGeometry(item);
   if (!geometry) return null;
   const lastupdate = coerceDate(item.lastupdate || item.last_update || item.updated || item.date || null);
@@ -167,10 +207,18 @@ function toDisasterDoc(item) {
   const desc = `EFFIS Burnt Area${name ? ` — ${name}` : ''} (${country}) — ${areaHa ? areaHa.toFixed(1) : 'N/A'} ha`;
 
   // start/end heuristic if only lastupdate is present
-  let startDate = item.startDate ||(lastupdate ? new Date(lastupdate.getTime() - 6*3600e3) : new Date());
+  let startDate = item.startDate || (lastupdate ? new Date(lastupdate.getTime() - 6 * 3600e3) : new Date());
   let endDate = null;
 
   const dangerLevel = chooseDanger(areaHa);
+
+  // NEW: compute a 500 m projected evacuation area
+  let evacGeometry = null;
+  try {
+    evacGeometry = await makeEvacuationGeometry(geometry, 500);
+  } catch (e) {
+    console.warn('⚠️ Evacuation buffer failed, storing none:', e.message);
+  }
 
   return {
     type: 'wildfire',
@@ -180,7 +228,8 @@ function toDisasterDoc(item) {
     startDate,
     endDate,
     historicalAreasOfEffect: [],
-    projectedAreasOfEffect: [],
+    // Store the buffered geometry as the first projected area (evacuation)
+    projectedAreasOfEffect: evacGeometry ? [evacGeometry] : [],
     updatedAt: new Date(),
     source: 'effis_api',
     sourceId: String(item.id || item.pk || item.objectid || item.ba_id || `${country}-${lastupdate ? lastupdate.toISOString() : Date.now()}`)
@@ -206,37 +255,38 @@ function toDisasterDoc(item) {
     const docs = [];
     let count = 0;
     for (const it of items) {
-    // Keep only requested province (Greek diacritics-insensitive)
-    if (PROVINCE && !provinceMatches(it.province || it.province_gr || it.nomosp || it.prefecture)) continue;
-    if (Number(it.area_ha) < 200) continue;
-    console.log(it.area_ha);
-    if (count==0){
+      if (PROVINCE && !provinceMatches(it.province || it.province_gr || it.nomosp || it.prefecture)) continue;
+      if (Number(it.area_ha) < 200) continue;
+      console.log(it.area_ha);
+      if (count == 0) {
         it.startDate = FIRST_WILDFIRE_APPEARANCE;
-    }
-    if (count==1){
+      }
+      if (count == 1) {
         it.startDate = SECOND_WILDFIRE_APPEARANCE;
-    }
-    count++;
-    const d = toDisasterDoc(it);
-    if (d) docs.push(d);
+      }
+      count++;
+
+      // CHANGE: await
+      const d = await toDisasterDoc(it);
+      if (d) docs.push(d);
     }
 
-        if (!docs.length) {
-        console.warn('⚠️ No geometries found to insert.');
-        } else {
-        // Upsert by (source, sourceId)
-        let upserts = 0;
-        for (const d of docs) {
-            const res = await Disaster.updateOne(
-            { source: d.source, sourceId: d.sourceId },
-            { $set: d },
-            { upsert: true }
-            );
-            // count approximate upserts (inserted or modified)
-            if (res.upsertedCount || res.modifiedCount) upserts++;
-        }
-        console.log(`✅ Upserted ${upserts}/${docs.length} wildfire docs`);
-        }
+    if (!docs.length) {
+      console.warn('⚠️ No geometries found to insert.');
+    } else {
+      // Upsert by (source, sourceId)
+      let upserts = 0;
+      for (const d of docs) {
+        const res = await Disaster.updateOne(
+        { source: d.source, sourceId: d.sourceId },
+        { $set: d },
+        { upsert: true }
+        );
+        // count approximate upserts (inserted or modified)
+        if (res.upsertedCount || res.modifiedCount) upserts++;
+      }
+      console.log(`✅ Upserted ${upserts}/${docs.length} wildfire docs`);
+    }
     } catch (e) {
         console.error('❌ Populate EFFIS error:', e);
         process.exitCode = 1;

@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@faker-js/faker": "^8.4.1",
+    "@turf/buffer": "^7.2.0",
+    "@turf/clean-coords": "^7.2.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
