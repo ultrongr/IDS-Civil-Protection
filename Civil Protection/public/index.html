@@ -110,12 +110,30 @@
       }
       if (kind === 'amea') {
         return `<b>AMEA</b><br/>${esc(p.name || 'Unknown')}<br/>Disability %: ${esc(String(p.disabilityPct ?? '-'))}<br/>Phone: ${esc(p.phone ?? '-')}` +
-               `<br/>Email: ${esc(p.email ?? '-')}`;
+              `<br/>Email: ${esc(p.email ?? '-')}`;
       }
+
+      // --- disasters
       const dt = v => (v ? new Date(v).toLocaleString('el-GR') : '—');
-      return `<b>Disaster</b><br/>Type: ${esc(p.type || 'event')}<br/>Danger: ${esc(p.dangerLevel || p.severity || '-')}` +
-             `<br/>Start: ${esc(dt(p.startDate || p.startedAt || p.timestamp))}<br/>End: ${esc(dt(p.endDate))}<br/>Source: ${esc(p.source || '-')}`;
+
+      // SPECIAL: projected areas get a different popup
+      if ((p.kind || '') === 'projected') {
+        return `<b>Evacuation area</b><br/>
+                Risk level: ${esc(p.dangerLevel || p.severity || '-') }<br/>
+                Effective from: ${esc(dt(p.startDate || p.startedAt || p.timestamp))}<br/>
+                Until: ${esc(dt(p.endDate))}<br/>
+                Source: ${esc(p.source || '-')}`;
+      }
+
+      // Default disaster popup
+      return `<b>Disaster</b><br/>
+              Type: ${esc(p.type || 'event')}<br/>
+              Danger: ${esc(p.dangerLevel || p.severity || '-') }<br/>
+              Start: ${esc(dt(p.startDate || p.startedAt || p.timestamp))}<br/>
+              End: ${esc(dt(p.endDate))}<br/>
+              Source: ${esc(p.source || '-')}`;
     }
+
     function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
     function vehicleIcon(props = {}, size = 36) {
       // const body = colorForKey(String(props.license_plate || props.id || ''));
@@ -140,46 +158,93 @@
     function addFeatureCollection(fc, kind) {
       if (!fc) return;
 
-      if (kind === 'disasters') {
-        if (fc.type === 'FeatureCollection' && Array.isArray(fc.features)) {
-          const polyLayer = L.geoJSON(fc, {
-            pane: 'pane-disasters',
-            interactive: true,
-            style: (feature) => {
-              const p = feature?.properties || {};
-              const lvl = p.dangerLevel || p.severity || 'moderate';
-              const color = dangerColor(lvl);
+    if (kind === 'disasters') {
+      if (fc.type === 'FeatureCollection' && Array.isArray(fc.features)) {
+        const projectedFC = { type: 'FeatureCollection',
+          features: fc.features.filter(f => (f.properties || {}).kind === 'projected') };
+        const mainFC = { type: 'FeatureCollection',
+          features: fc.features.filter(f => (f.properties || {}).kind !== 'projected') };
 
-              if (p.kind === 'projected') {
-                console.log("projected")
-                // Lighter fill + dashed outline
-                return {
-                  weight: 1,
-                  opacity: 0.8,
-                  color,
-                  dashArray: '6,6',
-                  fillOpacity: 0.20, // lighter
-                  fillColor: color
-                };
-              }
+        const styleFn = (feature) => {
+          const p = feature?.properties || {};
+          const color = dangerColor(p.dangerLevel || p.severity || 'moderate');
+          return p.kind === 'projected'
+            ? { weight:1, opacity:0.8, color, dashArray:'6,6', fillOpacity:0.20, fillColor:color }
+            : { weight:2, opacity:1,  color,                 fillOpacity:0.35, fillColor:color };
+        };
 
-              // Main perimeter
-              return { weight: 2, opacity: 1, color, fillOpacity: 0.35, fillColor: color };
-            },
-            onEachFeature: (feature, layer) => {
-              layer.bindPopup(renderPopup('disasters', feature.properties || {}));
-              // Ensure projected areas render under the main perimeter
-              if ((feature.properties || {}).kind === 'projected') {
-                layer.bringToBack();
-              }
+        // ⬇️ Add THIS onEach right here
+        const onEach = (feature, layer) => {
+          const props = feature.properties || {};
+          layer.bindPopup(renderPopup('disasters', props));
+
+          // --- hover tooltips ---
+          if (props.kind === 'projected') {
+            layer.bindTooltip('Evacuation area', { sticky: true, direction: 'top', opacity: 0.9 });
+          } else {
+            const t = props.type || 'Disaster';
+            const danger = props.dangerLevel || props.severity || '';
+            const label = danger ? `${t} — ${danger}` : t;
+            layer.bindTooltip(label, { sticky: true, direction: 'top', opacity: 0.9 });
+          }
+
+          // --- hover highlight (optional but nice) ---
+          const applyHover = () => {
+            if (props.kind === 'projected') {
+              layer.setStyle({ weight: 2, fillOpacity: 0.30 });
+            } else {
+              layer.setStyle({ weight: 3, fillOpacity: 0.45 });
+            }
+          };
+          const resetStyle = () => {
+            // restore base style using the same function you used in L.geoJSON
+            layer.setStyle(styleFn(feature));
+          };
+          layer.on('mouseover', applyHover);
+          layer.on('mouseout', resetStyle);
+
+          // keep the focus-rectangle fixes
+          layer.on('add', () => {
+            const el = layer.getElement?.();
+            if (el) {
+              el.removeAttribute('tabindex');
+              el.setAttribute('tabindex', '-1');
+              el.setAttribute('focusable', 'false');
+              el.style.outline = 'none';
             }
           });
+          layer.on('click', () => {
+            const ae = document.activeElement;
+            if (ae && ae !== document.body) ae.blur();
+          });
+        };
 
-          layers.disasters.addLayer(polyLayer);
-          try { lastBounds.extend(polyLayer.getBounds()); } catch {}
-        }
-        return;
+        // add projected first (under)
+        const projectedLayer = L.geoJSON(projectedFC, {
+          pane: 'pane-disasters',
+          interactive: true,
+          style: styleFn,
+          onEachFeature: onEach
+        });
+        layers.disasters.addLayer(projectedLayer);
+
+        // add main perimeters second (over)
+        const mainLayer = L.geoJSON(mainFC, {
+          pane: 'pane-disasters',
+          interactive: true,
+          style: styleFn,
+          onEachFeature: onEach
+        });
+        layers.disasters.addLayer(mainLayer);
+
+        try {
+          if (projectedLayer.getBounds().isValid()) lastBounds.extend(projectedLayer.getBounds());
+          if (mainLayer.getBounds().isValid())      lastBounds.extend(mainLayer.getBounds());
+        } catch {}
       }
+      return;
+    }
+
 
       if (!Array.isArray(fc.features)) return;
       const color = (kind === 'fleet') ? '#2b8eff' : '#a12bff';
@@ -216,46 +281,46 @@
       }
     }
 
-async function refreshAll() {
-  try {
-    const ts = Date.now();
+    async function refreshAll() {
+      try {
+        const ts = Date.now();
 
-    // Fetch disasters + AMEA always; fetch fleet only if not locked
-    const [disR, ameaR, fleetR] = await Promise.all([
-      fetch('/api/disasters?active=true&ts=' + ts, { cache: 'no-store' }),
-      fetch('/api/amea?ts=' + ts,                 { cache: 'no-store' }),
-      fleetLocked ? null : fetch('/api/fleet?ts=' + ts, { cache: 'no-store' })
-    ]);
+        // Fetch disasters + AMEA always; fetch fleet only if not locked
+        const [disR, ameaR, fleetR] = await Promise.all([
+          fetch('/api/disasters?active=true&ts=' + ts, { cache: 'no-store' }),
+          fetch('/api/amea?ts=' + ts,                 { cache: 'no-store' }),
+          fleetLocked ? null : fetch('/api/fleet?ts=' + ts, { cache: 'no-store' })
+        ]);
 
-    const [disasters, amea, fleet] = await Promise.all([
-      disR.json(),
-      ameaR.json(),
-      fleetLocked ? Promise.resolve(null) : fleetR.json()
-    ]);
+        const [disasters, amea, fleet] = await Promise.all([
+          disR.json(),
+          ameaR.json(),
+          fleetLocked ? Promise.resolve(null) : fleetR.json()
+        ]);
 
-    layers.disasters.clearLayers();
-    layers.amea.clearLayers();
-    if (!fleetLocked) {
-      layers.fleet.clearLayers();
-      fleetMarkers.clear();
+        layers.disasters.clearLayers();
+        layers.amea.clearLayers();
+        if (!fleetLocked) {
+          layers.fleet.clearLayers();
+          fleetMarkers.clear();
+        }
+        lastBounds = L.latLngBounds([]);
+
+        addFeatureCollection(disasters, 'disasters');
+        addFeatureCollection(amea,      'amea');
+        if (!fleetLocked && fleet) addFeatureCollection(fleet, 'fleet');
+
+        renderVehicleList();
+        applyFleetDim();
+
+        if (!didInitialFit && lastBounds.isValid()) {
+          map.fitBounds(lastBounds.pad(0.1));
+          didInitialFit = true;
+        }
+      } catch (e) {
+        console.error('Failed to refresh layers', e);
+      }
     }
-    lastBounds = L.latLngBounds([]);
-
-    addFeatureCollection(disasters, 'disasters');
-    addFeatureCollection(amea,      'amea');
-    if (!fleetLocked && fleet) addFeatureCollection(fleet, 'fleet');
-
-    renderVehicleList();
-    applyFleetDim();
-
-    if (!didInitialFit && lastBounds.isValid()) {
-      map.fitBounds(lastBounds.pad(0.1));
-      didInitialFit = true;
-    }
-  } catch (e) {
-    console.error('Failed to refresh layers', e);
-  }
-}
 
     // --- Routes drawing ---
     function clearRoutes() { layers.routes.clearLayers(); }

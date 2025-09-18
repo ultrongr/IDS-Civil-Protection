@@ -28,6 +28,16 @@ body { margin: 0; background: var(--bg); color: var(--fg); font-family: ui-sans-
 .popup .row { margin: 2px 0; }
 .popup .row.small { color: var(--muted); font-size: 12px; }
 
+/* Nuke focus rectangles on SVG features in Leaflet */
+.leaflet-container .leaflet-interactive:focus,
+.leaflet-container .leaflet-interactive:focus-visible,
+.leaflet-container svg *:focus {
+  outline: none !important;
+}
+
+
+
+
 .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; background: rgba(255,255,255,0.08); }
 .pill.active { background: rgba(22, 163, 74, 0.15); color: #86efac; border: 1px solid rgba(22, 163, 74, 0.35); }
 .pill.pending { background: rgba(217, 119, 6, 0.15); color: #fcd34d; border: 1px solid rgba(217, 119, 6, 0.35); }
