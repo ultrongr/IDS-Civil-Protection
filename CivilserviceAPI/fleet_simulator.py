@@ -414,9 +414,9 @@ class VehicleFleetSimulator:
 
     def get_vehicle_capacity(self, vehicle_type: str) -> Dict[str, int]:
         capacities = {
-            "ambulance": {"weight": 500, "crew": 4},
-            "fire_truck": {"weight": 2000, "crew": 4},
-            "police_car": {"weight": 300, "crew": 2},
+            "ambulance": {"weight": 500, "crew": 3},
+            "fire_truck": {"weight": 2000, "crew": 3},
+            "police_car": {"weight": 300, "crew": 3},
             "patrol_car": {"weight": 200, "crew": 2},
             "rescue_vehicle": {"weight": 1500, "crew": 8},
             "utility_van": {"weight": 1200, "crew": 3},

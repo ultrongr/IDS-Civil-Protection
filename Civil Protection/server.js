@@ -796,6 +796,13 @@ function formatDisabilityText(d) {
   return lines.join('\n');
 }
 
+function latestMinutesForDisability(pct) {
+  // clamp 0..100 then map linearly 45 → 10 minutes
+  const p = Math.max(0, Math.min(100, Number(pct)||0));
+  const maxMin = 45, minMin = 10;
+  return minMin + (maxMin - minMin) * (1 - p / 100);
+}
+
 
 
 async function loadAmeaFeatures() {
@@ -989,6 +996,13 @@ async function sendRouteEmail(vehicleId, directionsUrl, recipient, stopsInfo) {
   });
 }
 
+// RFC3339 without milliseconds (CFR: nanos must be unset)
+function rfc3339NoMillis(d) {
+  const s = new Date(Math.floor(d.getTime() / 1000) * 1000).toISOString();
+  return s.replace(/\.\d{3}Z$/, 'Z');
+}
+
+
 
 // ---- planner endpoint (OSRM-backed) ----
 app.post('/api/plan-routes', async (_req, res) => {
@@ -1011,6 +1025,7 @@ app.post('/api/plan-routes', async (_req, res) => {
     }
 
     // 1) Targets = AMEA inside any active disaster polygon
+    
     const targets = [];
     for (const f of amea) {
       const c = f.geometry?.coordinates;
@@ -1021,10 +1036,12 @@ app.post('/api/plan-routes', async (_req, res) => {
           name: f.properties?.name || 'AMEA',
           coord: c,
           disability_info: f.properties?.disability_info || '',
-          phone: f.properties?.phone || ''
+          phone: f.properties?.phone || '',
+          disabilityPct: Number(f.properties?.disabilityPct ?? 0) // ⬅️ keep this
         });
       }
     }
+
 
     if (!targets.length) {
       return res.json({
@@ -1084,28 +1101,49 @@ app.post('/api/plan-routes', async (_req, res) => {
     // Helper to convert [lon,lat] -> {latitude, longitude}
     const toLatLng = ([lon, lat]) => ({ latitude: lat, longitude: lon });
 
-    // ---- Build the ShipmentModel (correct shapes; integers for loads) ----
+    // ---- vehicles: add time cost to bias faster pickups
     const vehiclesModel = vehiclesAll.map((v) => ({
       name: `veh-${v.id}`,
-      startLocation: toLatLng(v.start),
-      // endLocation: toLatLng(v.start), // optional; add if vehicles must return
-      loadLimits: {
-        seats: { maxLoad: Math.max(0, Number(v.seatsLeft) || 0) }  // map, not array
-      },
-      costPerKilometer: 1
-      // optional: costPerKilometer, costPerHour, time windows...
+      startLocation: { latitude: v.start[1], longitude: v.start[0] },
+      loadLimits: { seats: { maxLoad: Math.max(0, Number(v.seatsLeft) || 0) } },
+      costPerKilometer: 1,
+      costPerHour: 60 // bias minimizing time (ETA)
     }));
 
-    const shipmentsModel = targets.map((t, idx) => ({
-      name: `t-${t.id || idx}`,
-      pickups: [{
-        arrivalLocation: toLatLng(t.coord),
-        loadDemands: { seats: { amount: 1 } }                      // map, not array
-        // optional: serviceDuration: "300s", timeWindows: [...]
-      }]
-    }));
+    const now = new Date();
+    const nowMs = now.getTime();
+    const capMs = nowMs + 12 * 3600 * 1000; // global +12h window
+    const nowIso = rfc3339NoMillis(now);
+    const globalEndIso = rfc3339NoMillis(new Date(capMs));
 
-    const model = { vehicles: vehiclesModel, shipments: shipmentsModel };
+    // tight window from disability %
+    const latestMinutesFor = (pct) => {
+      const p = Math.max(0, Math.min(100, Number(pct) || 0));
+      return 10 + (45 - 10) * (1 - p / 100); // 0%->45m, 100%->10m
+    };
+
+    const shipmentsModel = targets.map((t, idx) => {
+      const latestMs = Math.min(capMs, nowMs + latestMinutesFor(t.disabilityPct) * 60 * 1000);
+      const latestIso = rfc3339NoMillis(new Date(latestMs));
+      return {
+        name: `t-${t.id || idx}`,
+        pickups: [{
+          arrivalLocation: { latitude: t.coord[1], longitude: t.coord[0] },
+          loadDemands: { seats: { amount: 1 } },
+          duration: "180s",
+          timeWindows: [{ startTime: nowIso, endTime: latestIso }]
+        }]
+      };
+    });
+
+    // ✅ Add global window to the model
+    const model = {
+      vehicles: vehiclesModel,
+      shipments: shipmentsModel,
+      globalStartTime: nowIso,
+      globalEndTime: globalEndIso
+    };
+
     const solved = await optimizeTours(model);
 
     // clear any previous picks
