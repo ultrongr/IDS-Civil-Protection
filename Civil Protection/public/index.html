@@ -62,6 +62,10 @@
     map.createPane('pane-fleet');      map.getPane('pane-fleet').style.zIndex     = 460;
     map.createPane('pane-routes');     map.getPane('pane-routes').style.zIndex    = 470;
 
+    map.createPane('pane-pickups');
+    map.getPane('pane-pickups').style.zIndex = 480; // higher than routes
+
+
     function circle(color) {
       return { radius: 6, weight: 1, opacity: 1, fillOpacity: 0.9, color: '#222', fillColor: color };
     }
@@ -340,12 +344,16 @@
         pointToLayer: (f, latlng) => {
           const p = f.properties || {};
           if (p.kind === 'pickup') {
-            // const color = colorForKey(String(p.license_plate || p.vehicleId || ''));
             const color = colorFromType(p.type);
             const html = `<div class="pickup-label" style="background:${color}">${p.seq ?? ''}</div>`;
             return L.marker(latlng, {
-              pane: 'pane-routes',
-              icon: L.divIcon({ className: '', html, iconSize: [24, 24], iconAnchor: [12, 12] })
+              pane: 'pane-pickups', // ⬅️ use pickup pane instead of pane-routes
+              icon: L.divIcon({
+                className: '',
+                html,
+                iconSize: [24, 24],
+                iconAnchor: [12, 12]
+              })
             });
           }
           return L.circleMarker(latlng, { ...circle('#000'), pane: 'pane-routes' });
