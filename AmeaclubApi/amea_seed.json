@@ -11,7 +11,7 @@
     "disabilities": ["mobility_impairment"],
     "disabilitiesDesc": "Wheelchair user; needs ramp and elevator access.",
     "disabilityPct": 67,
-    "loc": { "type": "Point", "coordinates": [21.7756, 38.2466] },
+    "loc": { "type": "Point", "coordinates": [21.7698, 38.2578] },
     "caretaker": {
       "carename": "Michalis",
       "caresurname": "Drakos",
@@ -33,7 +33,7 @@
     "disabilities": ["visual_impairment"],
     "disabilitiesDesc": "Needs large-print documents and high-contrast signage.",
     "disabilityPct": 50,
-    "loc": { "type": "Point", "coordinates": [21.7974, 38.2509] },
+    "loc": { "type": "Point", "coordinates": [21.7611, 38.2491] },
     "caretaker": {
       "carename": "Theodora",
       "caresurname": "Manou",
@@ -55,7 +55,7 @@
     "disabilities": ["hearing_impairment"],
     "disabilitiesDesc": "Uses hearing aids; prefers SMS or written communication.",
     "disabilityPct": 45,
-    "loc": { "type": "Point", "coordinates": [21.7717, 38.2397] },
+    "loc": { "type": "Point", "coordinates": [21.7685, 38.2359] },
     "caretaker": {
       "carename": "Kostas",
       "caresurname": "Filipou",
@@ -77,7 +77,7 @@
     "disabilities": ["intellectual_disability"],
     "disabilitiesDesc": "Benefits from simplified, step-by-step instructions.",
     "disabilityPct": 60,
-    "loc": { "type": "Point", "coordinates": [21.652820, 38.155398 ] },
+    "loc": { "type": "Point", "coordinates": [21.6732, 38.1547 ] },
     "caretaker": {
       "carename": "Marina",
       "caresurname": "Vergi",
@@ -99,7 +99,7 @@
     "disabilities": ["chronic_pain"],
     "disabilitiesDesc": "Reduced mobility during flare-ups; needs nearby seating.",
     "disabilityPct": 40,
-    "loc": { "type": "Point", "coordinates": [21.6788, 38.12049] },
+    "loc": { "type": "Point", "coordinates": [21.666, 38.1596] },
     "caretaker": {
       "carename": "Thanasis",
       "caresurname": "Xenakis",
@@ -143,7 +143,7 @@
     "disabilities": ["autism_spectrum"],
     "disabilitiesDesc": "Prefers predictable schedules and quieter environments.",
     "disabilityPct": 35,
-    "loc": { "type": "Point", "coordinates": [21.7700, 38.2700] },
+    "loc": { "type": "Point", "coordinates": [21.7676, 38.279] },
     "caretaker": {
       "carename": "Petros",
       "caresurname": "Christou",
@@ -165,7 +165,7 @@
     "disabilities": ["visual_impairment"],
     "disabilitiesDesc": "Needs tactile guidance and audio prompts.",
     "disabilityPct": 48,
-    "loc": { "type": "Point", "coordinates": [21.7800, 38.2800] },
+    "loc": { "type": "Point", "coordinates": [21.7744, 38.2819] },
     "caretaker": {
       "carename": "Nikos",
       "caresurname": "Samios",

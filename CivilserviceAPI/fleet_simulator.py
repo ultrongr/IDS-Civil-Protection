@@ -286,31 +286,26 @@ class VehicleFleetSimulator:
                 self.road_manager.load_roads_for_city(city, lat, lon, radius)
         print(f"🗺️  Road segments loaded (global): {len(self.road_manager.road_segments)}")
 
-    def _spawn_point_near_station(self, vehicle_type: str, city: str = "Patras") -> List[float]:
+    def _spawn_point_near_station(self, vehicle_type: str, city: str = "Patras", station: Optional[Dict[str, float]] = None) -> List[float]:
         stations = STATIONS.get(vehicle_type, {}).get(city, [])
         if not stations:
-            # fallback to any road point in city if stations list is empty
             lon, lat = self.road_manager.get_random_road_point(city)
             return [lon, lat]
-
-        st = random.choice(stations)
-
-        # random offset 50–300 m around the station
-        r_m = random.uniform(50.0, 300.0)
+        st = station if station else random.choice(stations)
+        r_m = random.uniform(100.0, 400.0)
         theta = random.uniform(0.0, 2.0 * math.pi)
         lat_rad = math.radians(st["lat"])
-
         dlat = (r_m * math.cos(theta)) / 111_000.0
         dlon = (r_m * math.sin(theta)) / (111_000.0 * max(0.1, math.cos(lat_rad)))
-
         cand_lat = st["lat"] + dlat
         cand_lon = st["lon"] + dlon
-
-        # snap to nearest road point
         snap_lon, snap_lat = self.road_manager.get_nearest_road_point(cand_lat, cand_lon)
         return [snap_lon, snap_lat]
-    
-    
+
+    def generate_road_coordinates(self, vehicle_type: str, city: str = "Patras", station: Optional[Dict[str, float]] = None) -> List[float]:
+        return self._spawn_point_near_station(vehicle_type, city, station=station)
+
+
     @staticmethod
     def _now() -> str:
         return datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
@@ -320,8 +315,70 @@ class VehicleFleetSimulator:
         number = random.randint(1000, 9999)
         return f"{prefix}-{number}"
 
-    def generate_road_coordinates(self, vehicle_type: str, city: str = "Patras") -> List[float]:
-        return self._spawn_point_near_station(vehicle_type, city)
+    # def generate_road_coordinates(self, vehicle_type: str, city: str = "Patras") -> List[float]:
+    #     return self._spawn_point_near_station(vehicle_type, city)
+
+    def plan_station_spawns(self) -> List[Dict]:
+        """
+        Build a list of spawn specs like:
+        { "vehicle_type": "ambulance", "city": "Patras", "station": {...} }
+        ensuring >=1 and <=2 vehicles per station (Patras).
+        """
+        city = "Patras"
+
+        # Flatten all stations (for Patras) across the three vehicle types you use
+        station_specs = []
+        for vtype in VEHICLE_TYPES:
+            for st in STATIONS.get(vtype, {}).get(city, []):
+                station_specs.append({"vehicle_type": vtype, "city": city, "station": st})
+
+        if not station_specs:
+            # Fallback: if no stations configured, return generic slots
+            return [{"vehicle_type": random.choice(VEHICLE_TYPES), "city": city, "station": None}
+                    for _ in range(self.num_vehicles)]
+
+        # Ensure at least one per station
+        spawns: List[Dict] = station_specs.copy()
+
+        # Track count per station (use station name as key)
+        counts: Dict[str, int] = {s["station"]["name"]: 1 for s in station_specs}
+
+        # Fill remaining up to num_vehicles with max 2 per station
+        remaining = max(0, self.num_vehicles - len(spawns))
+        # Stations that can accept one more
+        expandable = [s for s in station_specs if counts.get(s["station"]["name"], 0) < 2]
+
+        while remaining > 0 and expandable:
+            s = random.choice(expandable)
+            name = s["station"]["name"]
+            counts[name] = counts.get(name, 0) + 1
+            spawns.append(s)
+            remaining -= 1
+            if counts[name] >= 2:
+                # remove from expandable
+                expandable = [x for x in expandable if x["station"]["name"] != name]
+
+        # If still short (shouldn't happen unless num_vehicles > 2*stations), duplicate randomly
+        while remaining > 0:
+            spawns.append(random.choice(station_specs))
+            remaining -= 1
+
+        # If too many (num_vehicles < stations), trim while keeping at least one per station
+        if len(spawns) > self.num_vehicles:
+            # Guarantee one per station first, then trim extras
+            base = station_specs.copy()
+            extras = [s for s in spawns if s not in base]
+            spawns = base[:]
+            for e in extras:
+                if len(spawns) >= self.num_vehicles: break
+                # only add if that station is still <2
+                nm = e["station"]["name"]
+                if sum(1 for x in spawns if x["station"] and x["station"]["name"] == nm) < 2:
+                    spawns.append(e)
+
+        # Final trim in case of any edge cases
+        return spawns[:self.num_vehicles]
+
 
     def move_vehicle_along_road(
         self,
@@ -358,7 +415,7 @@ class VehicleFleetSimulator:
     def get_vehicle_capacity(self, vehicle_type: str) -> Dict[str, int]:
         capacities = {
             "ambulance": {"weight": 500, "crew": 4},
-            "fire_truck": {"weight": 2000, "crew": 6},
+            "fire_truck": {"weight": 2000, "crew": 4},
             "police_car": {"weight": 300, "crew": 2},
             "patrol_car": {"weight": 200, "crew": 2},
             "rescue_vehicle": {"weight": 1500, "crew": 8},
@@ -394,61 +451,36 @@ class VehicleFleetSimulator:
         max_s = speeds["max"] * mult
         return round(random.triangular(min_s, max_s, speeds["cruise"] * mult), 1)
 
-    def generate_vehicle_entity(self, vehicle_id: int) -> Dict:
-        # Force home city = Patras
+    def generate_vehicle_entity(self, vehicle_id: int, vehicle_type: Optional[str] = None, station: Optional[Dict[str, float]] = None) -> Dict:
         home_city = "Patras"
-
-        # pick from restricted set
-        vehicle_type = random.choice(VEHICLE_TYPES)
+        vehicle_type = vehicle_type or random.choice(VEHICLE_TYPES)
         capacity_info = self.get_vehicle_capacity(vehicle_type)
         current_time = self._now()
 
         speed = self.get_realistic_speed_for_vehicle(vehicle_type)
         crew_onboard = random.randint(1, max(1, capacity_info["crew"] - 1))
 
-        # *** changed: station-based spawn in Patras by vehicle type ***
-        road_coordinates = self.generate_road_coordinates(vehicle_type, home_city)
+        road_coordinates = self.generate_road_coordinates(vehicle_type, home_city, station=station)
 
-        entity = {
+        return {
             "id": f"{BASE_ENTITY_ID}-{vehicle_id:03d}",
             "type": "Vehicle",
-
             "vehicleType":   { "type": "Text",    "value": vehicle_type },
             "license_plate": { "type": "Text",    "value": self.generate_license_plate() },
             "owner":         { "type": "Text",    "value": ORGANIZATION_ID },
             "homeCity":      { "type": "Text",    "value": home_city },
-
-            "contactPoint": {
-                "type": "StructuredValue",
-                "value": {
-                    "email": self.generate_email(),
-                    "contactType": "email",
-                }
-            },
-
+            "contactPoint":  { "type": "StructuredValue", "value": { "email": self.generate_email(), "contactType": "email" } },
             "totalSeats":    { "type": "Integer", "value": capacity_info["crew"] },
             "crew":          { "type": "Integer", "value": crew_onboard },
             "occupiedSeats": { "type": "Integer", "value": crew_onboard },
-
-            "location": {
-                "type": "geo:json",
-                "value": { "type": "Point", "coordinates": road_coordinates }
-            },
-
-            "speed": {
-                "type": "Number",
-                "value": speed,
-                "metadata": {
-                    "unitCode":  { "type": "Text",     "value": "KMH" },
-                    "timestamp": { "type": "DateTime", "value": current_time }
-                }
-            },
-
-            "status":      { "type": "Text",     "value": random.choice(["active","standby","maintenance","deployed"]) },
-            "lastUpdated": { "type": "DateTime", "value": current_time }
+            "location":      { "type": "geo:json", "value": { "type": "Point", "coordinates": road_coordinates } },
+            "speed":         { "type": "Number",  "value": speed,
+                            "metadata": { "unitCode": { "type":"Text","value":"KMH" },
+                                            "timestamp": { "type":"DateTime","value": current_time } } },
+            "status":        { "type": "Text",     "value": random.choice(["active","standby","maintenance","deployed"]) },
+            "lastUpdated":   { "type": "DateTime", "value": current_time }
         }
-        return entity
-    
+
     # -------------- Orion helpers --------------
     def check_and_create_entity(self, entity: Dict) -> bool:
         entity_id = entity["id"]
@@ -497,9 +529,20 @@ class VehicleFleetSimulator:
         print(f"🎯 ServicePath: {FIWARE_SERVICE_PATH}")
         print("-" * 60)
         ok = 0
-        for i in range(1, self.num_vehicles + 1):
+
+        spawns = self.plan_station_spawns()
+        # Optional: print a quick summary
+        summary = {}
+        for s in spawns:
+            key = (s["vehicle_type"], s["station"]["name"] if s["station"] else "None")
+            summary[key] = summary.get(key, 0) + 1
+        print("📌 Planned spawns (type @ station -> count):")
+        for (vt, stname), cnt in summary.items():
+            print(f"  - {vt} @ {stname}: {cnt}")
+
+        for i, spawn in enumerate(spawns, start=1):
             try:
-                entity = self.generate_vehicle_entity(i)
+                entity = self.generate_vehicle_entity(i, vehicle_type=spawn["vehicle_type"], station=spawn["station"])
                 self.vehicles.append(entity)
                 if self.check_and_create_entity(entity):
                     ok += 1
@@ -509,6 +552,7 @@ class VehicleFleetSimulator:
         print("-" * 60)
         print(f"📊 Summary: {ok}/{self.num_vehicles} vehicles posted/updated")
         return ok
+
 
     def update_vehicle_status(self, vehicle_id: Optional[object] = None):
         """
@@ -568,8 +612,8 @@ class VehicleFleetSimulator:
 
         try:
             resp = requests.patch(f"{ORION_URL}/{vehicle['id']}/attrs",
-                                  headers=_headers("application/json"),
-                                  json=updates, timeout=HTTP_TIMEOUT)
+                                headers=_headers("application/json"),
+                                json=updates, timeout=HTTP_TIMEOUT)
         except Exception as e:
             print(f"❌ PATCH error: {e}")
             return
@@ -600,7 +644,7 @@ class VehicleFleetSimulator:
         print("🗑️  Deleting all vehicle entities with base id prefix...")
         try:
             r = requests.get(f"{ORION_URL}?type=Vehicle&limit=999",
-                             headers=_headers(), timeout=HTTP_TIMEOUT)
+                            headers=_headers(), timeout=HTTP_TIMEOUT)
         except Exception as e:
             print(f"❌ GET error: {e}")
             return

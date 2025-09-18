@@ -96,7 +96,7 @@
     "email": "sofia.marinou@example.org",
     "phoneNumber": "+30 6907778899",
     "mandatoryCommunication": "phone",
-    "loc": { "type": "Point", "coordinates": [21.77, 38.271796] },
+    "loc": { "type": "Point", "coordinates": [21.7665, 38.2714] },
     "region": { "administrative": "Western Greece", "municipality": "Patras" },
     "disabilities": ["autism_spectrum"],
     "disabilitiesDesc": "Prefers predictable schedules.",
