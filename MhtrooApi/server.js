@@ -240,7 +240,27 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/EncryptedPayload'
+ *               allOf:
+ *                 - $ref: '#/components/schemas/EncryptedPayload'
+ *               description: >
+ *                 The `ciphertext` field, when decrypted, is a JSON string
+ *                 of an array of Amea objects.
+ *                 Each object follows the schema:
+ *                 [Amea](#/components/schemas/Amea).
+ *             examples:
+ *               encrypted:
+ *                 summary: Example encrypted envelope
+ *                 value:
+ *                   alg: AES-256-GCM
+ *                   iv: "Base64IV=="
+ *                   tag: "Base64Tag=="
+ *                   ciphertext: "Base64Cipher=="
+ *                   encoding: utf8
+ *                   issuedAt: 2025-09-22T12:34:56Z
+ *               decrypted:
+ *                 summary: Example decrypted payload
+ *                 value:
+ *                   - $ref: '#/components/schemas/Amea'
  *       401:
  *         description: Missing bearer token
  *       403:
@@ -248,6 +268,7 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
  *       500:
  *         description: Server error
  */
+
 app.get('/api/ids/data', bearerAuth, async (req, res) => {
   try {
     const ameas = await Amea.find();
