@@ -160,7 +160,7 @@ const components = {
     bearerAuth: { type: 'http', scheme: 'bearer' }
   },
   schemas: {
-    Member: {
+    MemberBase: {
       type: 'object',
       properties: {
         id: { type: 'integer', example: 1 },
@@ -170,10 +170,31 @@ const components = {
         email: { type: 'string', format: 'email', example: 'maria@example.com' },
         addressLine: { type: 'string', example: 'Leof. Amalias 10, Athens' },
         floor: { type: 'string', example: '2' },
-        latitude: { type: 'number', example: 38.2466 },
-        longitude: { type: 'number', example: 21.7346 },
+        latitude: { type: 'number', example: 37.9838 },
+        longitude: { type: 'number', example: 23.7275 },
         disabilityPct: { type: 'number', example: 67 }
       }
+    },
+    // Used by /members (list)
+    MemberListItem: {
+      allOf: [
+        { $ref: '#/components/schemas/MemberBase' },
+        {
+          type: 'object',
+          properties: {
+            disabilities: {
+              type: 'string',
+              nullable: true,
+              example: 'MOBILITY, HEARING'
+            },
+            disabilitiesDesc: {
+              type: 'string',
+              nullable: true,
+              example: '{"ramp":true} || {"notes":"Needs captions"}'
+            }
+          }
+        }
+      ]
     },
     Caretaker: {
       type: 'object',
@@ -198,21 +219,28 @@ const components = {
         features: { type: 'object', additionalProperties: true }
       }
     },
+    // Used by /members/{id} (single with relations)
     MemberWithRelations: {
-      type: 'object',
-      allOf: [{ $ref: '#/components/schemas/Member' }],
-      properties: {
-        caretakers: { type: 'array', items: { $ref: '#/components/schemas/Caretaker' } },
-        disabilities: { type: 'array', items: { $ref: '#/components/schemas/Disability' } }
-      }
+      allOf: [
+        { $ref: '#/components/schemas/MemberBase' },
+        {
+          type: 'object',
+          properties: {
+            caretakers: { type: 'array', items: { $ref: '#/components/schemas/Caretaker' } },
+            disabilities: { type: 'array', items: { $ref: '#/components/schemas/Disability' } }
+          }
+        }
+      ]
     },
     EncryptedPayload: {
       type: 'object',
+      description:
+        'AES-256-GCM envelope. The `ciphertext` is a base64-encoded JSON string of either `MemberListItem[]` or `MemberWithRelations`, depending on the endpoint.',
       properties: {
         alg: { type: 'string', example: 'AES-256-GCM' },
         iv: { type: 'string', description: 'base64 12-byte IV' },
         tag: { type: 'string', description: 'base64 16-byte GCM tag' },
-        ciphertext: { type: 'string', description: 'base64 ciphertext of JSON string' },
+        ciphertext: { type: 'string', description: 'base64 ciphertext of JSON string (see decrypted examples in each endpoint)' },
         encoding: { type: 'string', example: 'utf8' },
         issuedAt: { type: 'string', format: 'date-time' }
       },
@@ -220,6 +248,7 @@ const components = {
     }
   }
 };
+
 
 const swaggerOptions = {
   definition: {
@@ -261,7 +290,48 @@ app.get('/docs.json', (_req, res) => res.json(swaggerSpec));
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/EncryptedPayload'
+ *               allOf:
+ *                 - $ref: '#/components/schemas/EncryptedPayload'
+ *               description: >
+ *                 The `ciphertext` decrypts to a JSON array of
+ *                 [`MemberListItem`](#/components/schemas/MemberListItem).
+ *             examples:
+ *               encrypted:
+ *                 summary: Example encrypted envelope
+ *                 value:
+ *                   alg: AES-256-GCM
+ *                   iv: "Base64IV=="
+ *                   tag: "Base64Tag=="
+ *                   ciphertext: "Base64Cipher=="
+ *                   encoding: utf8
+ *                   issuedAt: 2025-09-22T12:34:56Z
+ *               decrypted:
+ *                 summary: Example decrypted payload (MemberListItem[])
+ *                 value:
+ *                   - id: 1
+ *                     name: "Maria Papadopoulou"
+ *                     age: 42
+ *                     phone: "+30 6912345678"
+ *                     email: "maria@example.com"
+ *                     addressLine: "Leof. Amalias 10, Athens"
+ *                     floor: "2"
+ *                     latitude: 37.9838
+ *                     longitude: 23.7275
+ *                     disabilityPct: 67
+ *                     disabilities: "MOBILITY, HEARING"
+ *                     disabilitiesDesc: "{\"ramp\":true} || {\"notes\":\"Needs captions\"}"
+ *                   - id: 2
+ *                     name: "Giorgos Nikolaou"
+ *                     age: 55
+ *                     phone: "+30 6900000002"
+ *                     email: "giorgos@example.com"
+ *                     addressLine: "Egnatia 100, Thessaloniki"
+ *                     floor: "1"
+ *                     latitude: 40.6401
+ *                     longitude: 22.9444
+ *                     disabilityPct: 50
+ *                     disabilities: "VISION"
+ *                     disabilitiesDesc: "{\"braille\":true}"
  *       401:
  *         description: Missing token
  *       403:
@@ -309,7 +379,50 @@ app.get('/api/ameaclub/members', bearerAuth, async (_req, res) => {
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/EncryptedPayload'
+ *               allOf:
+ *                 - $ref: '#/components/schemas/EncryptedPayload'
+ *               description: >
+ *                 The `ciphertext` decrypts to
+ *                 [`MemberWithRelations`](#/components/schemas/MemberWithRelations).
+ *             examples:
+ *               encrypted:
+ *                 summary: Example encrypted envelope
+ *                 value:
+ *                   alg: AES-256-GCM
+ *                   iv: "Base64IV=="
+ *                   tag: "Base64Tag=="
+ *                   ciphertext: "Base64Cipher=="
+ *                   encoding: utf8
+ *                   issuedAt: 2025-09-22T12:34:56Z
+ *               decrypted:
+ *                 summary: Example decrypted payload (MemberWithRelations)
+ *                 value:
+ *                   id: 1
+ *                   name: "Maria Papadopoulou"
+ *                   age: 42
+ *                   phone: "+30 6912345678"
+ *                   email: "maria@example.com"
+ *                   addressLine: "Leof. Amalias 10, Athens"
+ *                   floor: "2"
+ *                   latitude: 37.9838
+ *                   longitude: 23.7275
+ *                   disabilityPct: 67
+ *                   caretakers:
+ *                     - id: 10
+ *                       memberId: 1
+ *                       name: "Nikos Papadopoulos"
+ *                       phone: "+30 2101234567"
+ *                       email: "nikos@example.com"
+ *                       description: "Parent"
+ *                   disabilities:
+ *                     - id: 101
+ *                       memberId: 1
+ *                       type: "MOBILITY"
+ *                       features: { "ramp": true, "elevator": true }
+ *                     - id: 102
+ *                       memberId: 1
+ *                       type: "HEARING"
+ *                       features: { "captions": true }
  *       401:
  *         description: Missing token
  *       403:
@@ -317,6 +430,7 @@ app.get('/api/ameaclub/members', bearerAuth, async (_req, res) => {
  *       404:
  *         description: Not found
  */
+
 app.get('/api/ameaclub/members/:id', bearerAuth, async (req, res) => {
   try {
     const id = Number(req.params.id);
