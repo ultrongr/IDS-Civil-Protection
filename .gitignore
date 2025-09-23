@@ -3,3 +3,4 @@ node_modules/
 "Civil Protection/.env"
 **/.env
 Civil Protection/route-opt-key.json
+CivilserviceAPI/venv/*

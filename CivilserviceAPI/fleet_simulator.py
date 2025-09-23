@@ -97,6 +97,20 @@ def _headers(content_type: Optional[str] = None) -> Dict[str, str]:
         h["Fiware-Service"] = FIWARE_SERVICE_TENANT
     return h
 
+# ---- FIWARE Vehicle model helpers ----
+SERVICE_STATUS_VALUES = ["onRoute", "idle"]
+
+def random_service_status() -> str:
+    return random.choice(SERVICE_STATUS_VALUES)
+
+def category_for_vehicle_type(vtype: str):
+    # keep it simple and standards-friendly
+    return ["municipalServices"]
+
+def ref_model_for_vehicle_type(vtype: str) -> str:
+    # a simple placeholder relationship value
+    return "vehiclemodel:" + vtype.replace("_", "-")
+
 
 # ---------------- Road network ----------------
 class RoadNetworkManager:
@@ -450,7 +464,7 @@ class VehicleFleetSimulator:
         min_s = max(0, speeds["min"] * mult)
         max_s = speeds["max"] * mult
         return round(random.triangular(min_s, max_s, speeds["cruise"] * mult), 1)
-
+    
     def generate_vehicle_entity(self, vehicle_id: int, vehicle_type: Optional[str] = None, station: Optional[Dict[str, float]] = None) -> Dict:
         home_city = "Patras"
         vehicle_type = vehicle_type or random.choice(VEHICLE_TYPES)
@@ -462,23 +476,42 @@ class VehicleFleetSimulator:
 
         road_coordinates = self.generate_road_coordinates(vehicle_type, home_city, station=station)
 
+        # NGSI v2 Vehicle-aligned attributes
         return {
             "id": f"{BASE_ENTITY_ID}-{vehicle_id:03d}",
             "type": "Vehicle",
-            "vehicleType":   { "type": "Text",    "value": vehicle_type },
-            "license_plate": { "type": "Text",    "value": self.generate_license_plate() },
-            "owner":         { "type": "Text",    "value": ORGANIZATION_ID },
-            "homeCity":      { "type": "Text",    "value": home_city },
+
+            # ---- FIWARE Vehicle standard attrs ----
+            "name":                   { "value": f"CIV-{vehicle_id:03d}" },
+            "category":               { "value": category_for_vehicle_type(vehicle_type) },
+            "vehicleType":            { "value": vehicle_type },
+            "vehiclePlateIdentifier": { "value": self.generate_license_plate() },
+            "refVehicleModel":        { "type": "Relationship", "value": ref_model_for_vehicle_type(vehicle_type) },
+            "owner":                  { "type": "Relationship", "value": ORGANIZATION_ID },
+            "areaServed":             { "value": home_city },
+            "serviceStatus":          { "value": random_service_status() },
+
+            "speed": {
+                "value": speed,
+                "metadata": {
+                    "timestamp": { "type": "DateTime", "value": current_time }
+                }
+            },
+            "location": {
+                "type": "geo:json",
+                "value": { "type": "Point", "coordinates": road_coordinates },
+                "metadata": {
+                    "timestamp": { "type": "DateTime", "value": current_time }
+                }
+            },
+
+            # ---- Extensions (valid extra attrs in NGSI v2) ----
+            "homeCity":      { "type": "Text",      "value": home_city },
             "contactPoint":  { "type": "StructuredValue", "value": { "email": self.generate_email(), "contactType": "email" } },
-            "totalSeats":    { "type": "Integer", "value": capacity_info["crew"] },
-            "crew":          { "type": "Integer", "value": crew_onboard },
-            "occupiedSeats": { "type": "Integer", "value": crew_onboard },
-            "location":      { "type": "geo:json", "value": { "type": "Point", "coordinates": road_coordinates } },
-            "speed":         { "type": "Number",  "value": speed,
-                            "metadata": { "unitCode": { "type":"Text","value":"KMH" },
-                                            "timestamp": { "type":"DateTime","value": current_time } } },
-            "status":        { "type": "Text",     "value": random.choice(["active","standby","maintenance","deployed"]) },
-            "lastUpdated":   { "type": "DateTime", "value": current_time }
+            "totalSeats":    { "type": "Integer",   "value": capacity_info["crew"] },
+            "crew":          { "type": "Integer",   "value": crew_onboard },
+            "occupiedSeats": { "type": "Integer",   "value": crew_onboard },
+            "lastUpdated":   { "type": "DateTime",  "value": current_time }
         }
 
     # -------------- Orion helpers --------------
@@ -553,7 +586,6 @@ class VehicleFleetSimulator:
         print(f"📊 Summary: {ok}/{self.num_vehicles} vehicles posted/updated")
         return ok
 
-
     def update_vehicle_status(self, vehicle_id: Optional[object] = None):
         """
         Update a random vehicle or a specific one. vehicle_id may be:
@@ -585,41 +617,48 @@ class VehicleFleetSimulator:
         coords = vehicle.get("location", {}).get("value", {}).get("coordinates", [23.7348, 37.9755])
         cur_lon, cur_lat = coords
         vtype = vehicle.get("vehicleType", {}).get("value", "patrol_car")
-        home_city = vehicle.get("homeCity", {}).get("value")  # bias movement to city
-        if random.random() < 0.5:
-            new_speed = self.get_realistic_speed_for_vehicle(vtype)
-        else:
-            new_speed = 0
+        home_city = vehicle.get("homeCity", {}).get("value")
 
+        # speed variation
+        new_speed = self.get_realistic_speed_for_vehicle(vtype) if random.random() < 0.5 else 0.0
+
+        # move
         new_lon, new_lat = self.move_vehicle_along_road(cur_lon, cur_lat, new_speed, city=home_city)
+
+        # choose a FIWARE serviceStatus
+        new_status = random_service_status()
 
         updates = {
             "speed": {
                 "type": "Number",
                 "value": new_speed,
                 "metadata": {
-                    "unitCode":  { "type": "Text",     "value": "KMH" },
                     "timestamp": { "type": "DateTime", "value": current_time }
                 }
             },
             "location": {
                 "type": "geo:json",
-                "value": { "type": "Point", "coordinates": [new_lon, new_lat] }
+                "value": { "type": "Point", "coordinates": [new_lon, new_lat] },
+                "metadata": {
+                    "timestamp": { "type": "DateTime", "value": current_time }
+                }
             },
-            "status":      { "type": "Text",     "value": random.choice(["active","standby","maintenance","deployed"]) },
-            "lastUpdated": { "type": "DateTime", "value": current_time }
+            "serviceStatus": { "type": "Text", "value": new_status },
+            "lastUpdated":   { "type": "DateTime", "value": current_time }
         }
 
         try:
-            resp = requests.patch(f"{ORION_URL}/{vehicle['id']}/attrs",
-                                headers=_headers("application/json"),
-                                json=updates, timeout=HTTP_TIMEOUT)
+            resp = requests.patch(
+                f"{ORION_URL}/{vehicle['id']}/attrs",
+                headers=_headers("application/json"),
+                json=updates, timeout=HTTP_TIMEOUT
+            )
         except Exception as e:
             print(f"❌ PATCH error: {e}")
             return
 
         if resp.status_code == 204:
-            print(f"✅ Moved {vehicle['id']} (Speed: {new_speed} km/h)")
+            print(f"✅ Updated {vehicle['id']} (Speed: {new_speed} km/h, Status: {new_status})")
             # Update local copy
             for k, v in updates.items():
                 vehicle[k] = v
@@ -770,10 +809,11 @@ def main():
                     print(f"\n📊 Found {len(vehicles)} vehicle entities:")
                     for e in vehicles[:10]:
                         vehicle_type = e.get('vehicleType', {}).get('value', 'unknown')
-                        status = e.get('status', {}).get('value', 'unknown')
+                        service_status = e.get('serviceStatus', {}).get('value', 'unknown')
                         coords = e.get('location', {}).get('value', {}).get('coordinates', [0, 0])
-                        home_city = e.get('homeCity', {}).get('value', '-')
-                        print(f"  - {e['id']}: {vehicle_type} ({status}) at [{coords[0]:.4f}, {coords[1]:.4f}] • homeCity={home_city}")
+                        area_served = e.get('areaServed', {}).get('value', e.get('homeCity', {}).get('value', '-'))
+                        print(f"  - {e['id']}: {vehicle_type} ({service_status}) at [{coords[0]:.4f}, {coords[1]:.4f}] • areaServed={area_served}")
+
                     if len(vehicles) > 10:
                         print(f"  ... and {len(vehicles) - 10} more")
                     print(f"\n🔗 {ORION_URL}?type=Vehicle&limit=999 (requires headers)")

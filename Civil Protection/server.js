@@ -150,7 +150,7 @@ async function osrmRoute(coords) {
   const url = `${ROUTING_BASE}/route/v1/driving/${pathStr}?overview=full&geometries=geojson&steps=false&annotations=distance,duration`;
 
   try {
-    const r = await axios.get(encodeURI(url), { timeout: 15000 });
+    const r = await axios.get(encodeURI(url), { timeout: 30000 });
     const route = r.data?.routes?.[0];
     if (!route?.geometry) return null;
     return {
@@ -858,29 +858,36 @@ async function loadFleetFeatures() {
   const r = await axios.get(ORION_URL, { params, headers: fiwareHeaders(), timeout: 15000 });
   let entities = r.data || [];
   if (BASE_ENTITY_ID_PREFIX) entities = entities.filter(e => String(e.id || '').startsWith(BASE_ENTITY_ID_PREFIX));
+
   const features = [];
   for (const e of entities) {
     const coords = Array.isArray(e?.location?.coordinates) ? e.location.coordinates : null;
     if (!coords || coords.length !== 2) continue;
-    const totalSeats    = Number(e.totalSeats ?? 0);
-    const occupiedSeats = Number(e.occupiedSeats ?? e.crew ?? 0);
+
+    const totalSeats     = Number(e.totalSeats ?? 0);
+    const occupiedSeats  = Number(e.occupiedSeats ?? e.crew ?? 0);
     const availableSeats = Math.max(0, totalSeats - occupiedSeats);
-    console.log("type",e.type)
+
     features.push({
       type: 'Feature',
       geometry: { type: 'Point', coordinates: coords },
-      email: e.contactPoint?.email,
+      // keep email at top-level for planner (same as before)
+      email: e?.contactPoint?.email,
       properties: {
         id: e.id,
-        license_plate: e.license_plate ?? '-',
         type: e.vehicleType ?? 'unknown',
+        // v2 standard fields (mapped to your existing property names)
+        license_plate: e.vehiclePlateIdentifier ?? '-',  // ← formerly e.license_plate
+        serviceStatus: e.serviceStatus ?? '-',
+        status: e.serviceStatus ?? '-',                  // ← backward-compat for any UI code using "status"
+        speed: Number(e.speed ?? 0),
+        lastUpdated: e.lastUpdated ?? '-',
         totalSeats,
         occupiedSeats,
         availableSeats
       }
     });
   }
-
   return features;
 }
 
@@ -1341,6 +1348,7 @@ app.post('/api/plan-routes', async (_req, res) => {
 });
 
 
+
 // --- Fleet (FIWARE Orion) -> GeoJSON
 app.get('/api/fleet', async (_req, res) => {
   try {
@@ -1349,29 +1357,32 @@ app.get('/api/fleet', async (_req, res) => {
     let entities = r.data || [];
     if (BASE_ENTITY_ID_PREFIX) entities = entities.filter(e => String(e.id || '').startsWith(BASE_ENTITY_ID_PREFIX));
 
-    const features = [];
-    for (const e of entities) {
+    const features = entities.map(e => {
       const coords = Array.isArray(e?.location?.coordinates) ? e.location.coordinates : null;
-      if (!coords || coords.length !== 2) continue;
-      features.push({
+      if (!coords || coords.length !== 2) return null;
+
+      return {
         type: 'Feature',
         geometry: { type: 'Point', coordinates: coords },
         properties: {
           id: e.id,
           type: e.vehicleType ?? 'unknown',
-          license_plate: e.license_plate ?? '-',
-          status: e.status ?? '-',
-          speed: e.speed ?? 0,
+          license_plate: e.vehiclePlateIdentifier ?? '-',  // ← v2 name -> your UI key
+          serviceStatus: e.serviceStatus ?? '-',
+          status: e.serviceStatus ?? '-',                  // ← backward-compat
+          speed: Number(e.speed ?? 0),
           lastUpdated: e.lastUpdated ?? '-'
         }
-      });
-    }
+      };
+    }).filter(Boolean);
+
     res.json({ type: 'FeatureCollection', features });
   } catch (err) {
     const status = err.response?.status || 502;
     res.status(status).json({ error: 'orion_fetch_failed', detail: err.response?.data || String(err) });
   }
 });
+
 
 // static app (Leaflet) after auth
 app.use(express.static(path.join(__dirname, 'public')));
