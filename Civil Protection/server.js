@@ -49,7 +49,8 @@ const BASIC_PASS_HASH  = process.env.BASIC_PASS_HASH;     // bcrypt hash (option
 
 // Road routing service (OSRM / Mapbox / Valhalla etc.)
 const ROUTING_BASE = process.env.ROUTING_BASE || 'https://router.project-osrm.org'; // dev: OSRM demo
-
+const ORS_BASE = process.env.ORS_BASE || 'https://api.openrouteservice.org';
+const ORS_API_KEY = process.env.ORS_API_KEY || '';
 
 // ----------------- Axios agent (self-signed) -----------------
 const httpsAgent = INSECURE_TLS ? new https.Agent({ rejectUnauthorized: false }) : undefined;
@@ -115,6 +116,144 @@ function classifyService(cfg) {
   if (/\bamea\b/.test(tag) || /\bamea\b/.test(ep)) return 'amea';
 
   return 'other';
+}
+const OSRM_TIMEOUT_MS = Number(process.env.OSRM_TIMEOUT_MS || 12000);
+const ROUTING_BASE_FALLBACK = (process.env.ROUTING_BASE_FALLBACK || '').replace(/\/$/,'');
+const FALLBACK_SPEED_KMH = Number(process.env.FALLBACK_SPEED_KMH || 45);
+
+function straightLineRoute(coords, avgKmh = FALLBACK_SPEED_KMH) {
+  const geometry = { type: 'LineString', coordinates: coords };
+  let totalKm = 0;
+  for (let i = 1; i < coords.length; i++) {
+    totalKm += haversineKm(coords[i - 1], coords[i]);
+  }
+  const durationMin = avgKmh > 0 ? (totalKm / avgKmh) * 60 : undefined;
+  return {
+    geometry,
+    distanceKm: Number(totalKm.toFixed(2)),
+    durationMin: durationMin != null ? Number(durationMin.toFixed(1)) : undefined,
+    source: 'fallback:straight'
+  };
+}
+
+async function tryOsrm(base, coords, { timeout = OSRM_TIMEOUT_MS, overview = 'full' } = {}) {
+  const pathStr = coords.map(([lon, lat]) => `${lon.toFixed(6)},${lat.toFixed(6)}`).join(';');
+  const url = `${base.replace(/\/$/,'')}/route/v1/driving/${pathStr}?overview=${overview}&geometries=geojson&steps=false&annotations=distance,duration`;
+  const r = await axios.get(encodeURI(url), { timeout });
+  const route = r.data?.routes?.[0];
+  if (!route?.geometry) return null;
+  return {
+    geometry: route.geometry,
+    distanceKm: (route.distance || 0) / 1000,
+    durationMin: (route.duration || 0) / 60,
+    source: base
+  };
+}
+
+async function routeBestEffort(coords) {
+  if (!Array.isArray(coords) || coords.length < 2) return null;
+
+  if (ORS_API_KEY) {
+    const r = await orsRoute(coords);
+    // if (!r) console.log("returned null r")
+    if (r) return { ...r, source: 'openrouteservice' };
+  }
+
+  // 1) Primary OSRM
+  try {
+    const r = await tryOsrm(ROUTING_BASE, coords, { timeout: OSRM_TIMEOUT_MS, overview: 'full' });
+    if (r) return r;
+  } catch (e) {
+    console.warn('OSRM primary failed:', e.response?.status || e.code || e.message);
+  }
+
+  // 2) Degraded OSRM
+  try {
+    const r = await tryOsrm(ROUTING_BASE, coords, {
+      timeout: Math.max(5000, Math.floor(OSRM_TIMEOUT_MS / 2)),
+      overview: 'simplified'
+    });
+    if (r) return r;
+  } catch (e) {
+    console.warn('OSRM primary (degraded) failed:', e.response?.status || e.code || e.message);
+  }
+
+  // 3) Backup OSRM
+  if (ROUTING_BASE_FALLBACK) {
+    try {
+      const r = await tryOsrm(ROUTING_BASE_FALLBACK, coords, {
+        timeout: OSRM_TIMEOUT_MS,
+        overview: 'simplified'
+      });
+      if (r) return r;
+    } catch (e) {
+      console.warn('OSRM fallback host failed:', e.response?.status || e.code || e.message);
+    }
+  }
+
+  
+  
+  
+
+  // 5) Final: straight-line fallback
+  return straightLineRoute(coords);
+}
+
+async function orsRoute(coords) {
+  if (!Array.isArray(coords) || coords.length < 2 || !ORS_API_KEY) return null;
+  try {
+    const url = `${ORS_BASE}/v2/directions/driving-car/geojson`;
+    const r = await axios.post(
+      url,
+      { coordinates: coords, instructions: false }, // full path via waypoints in given order
+      { headers: { Authorization: ORS_API_KEY, 'Content-Type': 'application/json' }, timeout: 30000 }
+    );
+
+    const feat = r.data?.features?.[0];
+    const geom = feat?.geometry;
+    const sum  = feat?.properties?.summary; // { distance (m), duration (s) }
+    // console.log(`ors route: ${JSON.stringify({ geom, sum })}`);
+
+    if (!geom || !sum) {
+      return null;
+    }
+    return {
+      geometry: geom,                               // GeoJSON LineString
+      distanceKm: (Number(sum.distance) || 0) / 1000,
+      durationMin: (Number(sum.duration) || 0) / 60
+    };
+  } catch (e) {
+    console.warn('ORS route failed:', e.response?.status || e.message);
+    return null;
+  }
+}
+
+// ORS matrix fallback to mimic { durations }
+async function orsTable(origins, destinations) {
+  if (!Array.isArray(origins) || !origins.length || !Array.isArray(destinations) || !destinations.length || !ORS_API_KEY) {
+    return null;
+  }
+  try {
+    const url = `${ORS_BASE}/v2/matrix/driving-car`;
+    // ORS expects one flat "locations" list, with source/destination indices
+    const locations = [...origins, ...destinations]; // [[lon,lat],...]
+    const sources = origins.map((_, i) => i);
+    const destStart = origins.length;
+    const dests = destinations.map((_, i) => i + destStart);
+
+    const r = await axios.post(
+      url,
+      { locations, sources, destinations: dests, metrics: ['duration'] },
+      { headers: { Authorization: ORS_API_KEY, 'Content-Type': 'application/json' }, timeout: 30000 }
+    );
+
+    const durations = r.data?.durations; // seconds, shape: sources x destinations
+    if (!durations || !durations.length) return null;
+    return { durations };
+  } catch (e) {
+    console.warn('ORS table failed:', e.response?.status || e.message);
+    return null;
+  }
 }
 
 // OSRM duration matrix between origin(s) and destination(s)
@@ -1233,11 +1372,17 @@ app.post('/api/plan-routes', async (_req, res) => {
     } else {
       console.warn('[CFR] No routes returned; using global greedy fallback');
 
-      const table = await osrmTable(
-        vehiclesAll.map(v => v.start),
-        targets.map(t => t.coord)
-      );
-      const durations = table?.durations; // shape: vehiclesAll x targets
+      console.warn('[CFR] No routes returned; using global greedy fallback');
+
+      const origins = vehiclesAll.map(v => v.start);
+      const dests   = targets.map(t => t.coord);
+
+      const table =
+        await osrmTable(origins, dests) ||
+        await orsTable(origins, dests);   // <— add this
+
+      const durations = table?.durations;
+
 
       const unassigned = new Set(targets.map((_, i) => i));
       while (unassigned.size && vehiclesAll.some(v => v.seatsLeft > 0)) {
@@ -1272,23 +1417,13 @@ app.post('/api/plan-routes', async (_req, res) => {
       const order = v.picks;
       const orderedCoords = [v.start, ...order.map(o => o.coord)];  // [[lon,lat],...]
 
-      // Try OSRM first
       let geometry, distanceKm, durationMin;
-      const routed = await osrmRoute(orderedCoords);
-      if (routed) {
-        geometry = routed.geometry;             // GeoJSON LineString
-        distanceKm = Number(routed.distanceKm.toFixed(2));
-        durationMin = Number(routed.durationMin.toFixed(1));
-      } else {
-        // Fallback: straight lines
-        geometry = { type: 'LineString', coordinates: orderedCoords };
-        let totalKm = 0;
-        for (let i = 1; i < orderedCoords.length; i++) {
-          totalKm += haversineKm(orderedCoords[i - 1], orderedCoords[i]);
-        }
-        distanceKm = Number(totalKm.toFixed(2));
-        durationMin = undefined;
-      }
+      const routed = await routeBestEffort(orderedCoords);
+      // console.log("routed response", routed)
+      geometry    = routed.geometry;
+      distanceKm  = Number(routed.distanceKm.toFixed(2));
+      durationMin = routed.durationMin != null ? Number(routed.durationMin.toFixed(1)) : undefined;
+
       const directionsUrl = buildGmapsDirUrl(orderedCoords);
       
 
