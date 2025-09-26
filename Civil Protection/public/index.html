@@ -110,7 +110,7 @@
 
     function renderPopup(kind, p) {
       if (kind === 'fleet') {
-        return `<b>Vehicle</b><br/>ID: ${esc(p.id)}<br/>Plate: ${esc(p.license_plate)}<br/>Type: ${esc(p.type)}<br/>Speed: ${esc(String(p.speed))}`;
+        return `<b>Vehicle</b><br/>ID: ${esc(p.id)}<br/>Plate: ${esc(p.license_plate)}<br/>Type: ${esc(p.type)}<br/>Speed: ${esc(String(p.speed))}<br/>Free seats: ${esc(p.availableSeats)}`;
       }
       if (kind === 'amea') {
         return `<b>AMEA</b><br/>${esc(p.name || 'Unknown')}<br/>Disability %: ${esc(String(p.disabilityPct ?? '-'))}<br/>Phone: ${esc(p.phone ?? '-')}` +

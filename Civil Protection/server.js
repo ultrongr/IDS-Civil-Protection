@@ -1495,7 +1495,9 @@ app.get('/api/fleet', async (_req, res) => {
     const features = entities.map(e => {
       const coords = Array.isArray(e?.location?.coordinates) ? e.location.coordinates : null;
       if (!coords || coords.length !== 2) return null;
-
+      const totalSeats = Number(e.totalSeats ?? 0);
+      const occupiedSeats = Number(e.occupiedSeats ?? e.crew ?? 0);
+      const availableSeats = Math.max(0, totalSeats - occupiedSeats);
       return {
         type: 'Feature',
         geometry: { type: 'Point', coordinates: coords },
@@ -1506,7 +1508,8 @@ app.get('/api/fleet', async (_req, res) => {
           serviceStatus: e.serviceStatus ?? '-',
           status: e.serviceStatus ?? '-',                  // ← backward-compat
           speed: Number(e.speed ?? 0),
-          lastUpdated: e.lastUpdated ?? '-'
+          lastUpdated: e.lastUpdated ?? '-',
+          availableSeats,
         }
       };
     }).filter(Boolean);
