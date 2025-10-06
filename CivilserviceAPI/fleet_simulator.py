@@ -285,7 +285,7 @@ def weighted_city_choice(weights: Dict[str, float]) -> str:
 # ---------------- Simulator ----------------
 class VehicleFleetSimulator:
     def __init__(self, num_vehicles=10):  # force 10 vehicles
-        self.num_vehicles = 10
+        self.num_vehicles = num_vehicles    
         self.vehicles: List[Dict] = []
         self.road_manager = RoadNetworkManager()
         self.seeded_mails = ["ktsambras@gmail.com", "ktsambras@gmail.com"]
@@ -741,7 +741,7 @@ def main():
     print("🚨 Civil Service Vehicle Fleet Simulator - Road Edition (NGSI v2) 🚨")
     print("=" * 60)
 
-    simulator = VehicleFleetSimulator(num_vehicles=10)
+    simulator = VehicleFleetSimulator(num_vehicles=7)
 
     while True:
         print("\n📋 Options:")

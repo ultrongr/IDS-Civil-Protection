@@ -461,7 +461,8 @@ async function optimizeTours(model) {
     const token = await getGcpAccessToken();
     const r = await axios.post(
       url,
-      { model, searchMode: 'CONSUME_ALL_AVAILABLE_TIME' }, // you can add optional knobs here
+      // { model, searchMode: 'CONSUME_ALL_AVAILABLE_TIME' }, // you can add optional knobs here
+      { model, searchMode: 'RETURN_FAST' }, // you can add optional knobs here
       
       { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, timeout: 30000 }
     );
@@ -1238,7 +1239,8 @@ app.post('/api/plan-routes', async (_req, res) => {
       loadLimits: {
         seats: { maxLoad: Math.max(0, Number(v.seatsLeft) || 0) }  // map, not array
       },
-      costPerKilometer: 1
+      costPerKilometer: 1,
+      costPerHour: 2
       // optional: costPerKilometer, costPerHour, time windows...
     }));
 
