@@ -1,0 +1,1092 @@
+2025-10-11T19:48:58.030Z - Environment variables loaded
+{
+  PROVIDER_ALIAS: 'https://connectorameaclub:8083',
+  CONSUMER_URL: 'https://localhost:8081',
+  BROKER_API: 'https://broker-reverseproxy/infrastructure',
+  BROKER_REV_PROXY: 'https://broker-reverseproxy'
+}
+
+2025-10-11T19:48:58.035Z - Registering consumer
+
+2025-10-11T19:48:58.050Z - REQUEST: POST https://localhost:8081/api/ids/connector/update
+{
+  params: { recipient: 'https://broker-reverseproxy/infrastructure' },
+  data: null,
+  headers: Object [AxiosHeaders] {
+    Accept: 'application/json, text/plain, */*',
+    'Content-Type': undefined
+  }
+}
+
+2025-10-11T19:49:26.011Z - ERROR RESPONSE: https://localhost:8081/api/ids/connector/update
+{
+  message: 'Request failed with status code 500',
+  data: { message: 'MESSAGE_SENDING_FAILED' },
+  status: 500
+}
+
+2025-10-11T19:49:26.017Z - ERROR
+{
+  message: 'Request failed with status code 500',
+  stack: 'AxiosError: Request failed with status code 500\n' +
+    '    at settle (file:///home/kostas/Desktop/IDS-testbed/ConfigureConnector/node_modules/axios/lib/core/settle.js:19:12)\n' +
+    '    at IncomingMessage.handleStreamEnd (file:///home/kostas/Desktop/IDS-testbed/ConfigureConnector/node_modules/axios/lib/adapters/http.js:599:11)\n' +
+    '    at IncomingMessage.emit (node:events:529:35)\n' +
+    '    at endReadableNT (node:internal/streams/readable:1400:12)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:82:21)\n' +
+    '    at Axios.request (file:///home/kostas/Desktop/IDS-testbed/ConfigureConnector/node_modules/axios/lib/core/Axios.js:45:41)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n' +
+    '    at async file:///home/kostas/Desktop/IDS-testbed/ConfigureConnector/consumer.js:92:3',
+  data: { message: 'MESSAGE_SENDING_FAILED' }
+}
+
+2025-10-11T19:50:28.919Z - Environment variables loaded
+{
+  PROVIDER_ALIAS: 'https://connectorameaclub:8083',
+  CONSUMER_URL: 'https://localhost:8081',
+  BROKER_API: 'https://broker-reverseproxy/infrastructure',
+  BROKER_REV_PROXY: 'https://broker-reverseproxy'
+}
+
+2025-10-11T19:50:28.921Z - Registering consumer
+
+2025-10-11T19:50:28.928Z - REQUEST: POST https://localhost:8081/api/ids/connector/update
+{
+  params: { recipient: 'https://broker-reverseproxy/infrastructure' },
+  data: null,
+  headers: Object [AxiosHeaders] {
+    Accept: 'application/json, text/plain, */*',
+    'Content-Type': undefined
+  }
+}
+
+2025-10-11T19:50:40.487Z - RESPONSE: POST https://localhost:8081/api/ids/connector/update
+{ status: 200, data: '' }
+
+2025-10-11T19:50:40.492Z - Checking registration
+
+2025-10-11T19:50:40.493Z - REQUEST: POST https://localhost:8081/api/ids/description
+{
+  params: {
+    recipient: 'https://broker-reverseproxy/infrastructure',
+    elementId: 'https://broker-reverseproxy/connectors/'
+  },
+  data: null,
+  headers: Object [AxiosHeaders] {
+    Accept: 'application/json, text/plain, */*',
+    'Content-Type': undefined
+  }
+}
+
+2025-10-11T19:50:42.700Z - RESPONSE: POST https://localhost:8081/api/ids/description
+{
+  status: 200,
+  data: {
+    '@graph': [
+      {
+        '@id': 'https://broker-reverseproxy/connectors/',
+        '@type': 'ids:ConnectorCatalog',
+        listedConnector: [
+          'https://broker-reverseproxy/connectors/1732262173',
+          'https://broker-reverseproxy/connectors/-879192093',
+          'https://broker-reverseproxy/connectors/1781089339',
+          'https://broker-reverseproxy/connectors/-657649866',
+          'https://broker-reverseproxy/connectors/2129657531'
+        ]
+      },
+      {
+        '@id': 'https://broker-reverseproxy/connectors/-657649866',
+        '@type': 'ids:BaseConnector',
+        sameAs: 'https://connector_Mhtroo',
+        curator: 'https://sovity.de/',
+        description: 'IDS Connector Mhtroo with static example resources',
+        hasDefaultEndpoint: 'https://w3id.org/idsa/autogen/connectorEndpoint/e5e2ab04-633a-44b9-87d9-a097ae6da3cf',
+        inboundModelVersion: [
+          '4.2.1', '4.2.4',
+          '4.2.2', '4.0.0',
+          '4.2.5', '4.2.0',
+          '4.1.2', '4.2.7',
+          '4.1.0', '4.2.3',
+          '4.2.6'
+        ],
+        maintainer: 'https://sovity.de/',
+        outboundModelVersion: '4.2.7',
+        publicKey: 'https://w3id.org/idsa/autogen/publicKey/78eb73a3-3a2a-4626-a0ff-631ab50a00f9',
+        resourceCatalog: 'https://broker-reverseproxy/connectors/-657649866/61163367',
+        securityProfile: 'https://w3id.org/idsa/code/BASE_SECURITY_PROFILE',
+        title: 'Dataspace Connector',
+        version: '8.0.2'
+      },
+      {
+        '@id': 'https://broker-reverseproxy/connectors/-657649866/61163367',
+        '@type': 'ids:ResourceCatalog',
+        sameAs: 'https://localhost:8082/api/catalogs/38b4545a-45fb-4fee-853d-a6854556af4b'
+      },
+      {
+        '@id': 'https://broker-reverseproxy/connectors/-879192093',
+        '@type': 'ids:BaseConnector',
+        sameAs: 'https://connector_Naturaldisaster',
+        curator: 'https://sovity.de/',
+        description: 'IDS Connector Naturaldisaster with static example resources',
+        hasDefaultEndpoint: 'https://w3id.org/idsa/autogen/connectorEndpoint/abcd1234-5678-90ab-cdef-1234567890ab',
+        inboundModelVersion: [
+          '4.2.0', '4.1.0',
+          '4.0.0', '4.2.5',
+          '4.2.6', '4.2.3',
+          '4.2.4', '4.2.7',
+          '4.2.1', '4.1.2',
+          '4.2.2'
+        ],
+        maintainer: 'https://sovity.de/',
+        outboundModelVersion: '4.2.7',
+        publicKey: 'https://w3id.org/idsa/autogen/publicKey/abcd1234-5678-90ab-cdef-1234567890ab',
+        resourceCatalog: 'https://broker-reverseproxy/connectors/-879192093/-1356068299',
+        securityProfile: 'https://w3id.org/idsa/code/BASE_SECURITY_PROFILE',
+        title: 'Dataspace Connector',
+        version: '8.0.2'
+      },
+      {
+        '@id': 'https://broker-reverseproxy/connectors/-879192093/-1356068299',
+        '@type': 'ids:ResourceCatalog',
+        sameAs: 'https://localhost:8084/api/catalogs/f5502843-824e-4e61-b456-06919a98370f'
+      },
+      {
+        '@id': 'https://broker-reverseproxy/connectors/1732262173',
+        '@type': 'ids:BaseConnector',
+        sameAs: 'https://connectorCivilservice',
+        curator: 'https://sovity.de/',
+        description: 'IDS Connector Civilservice for vehicle monitoring and data sharing',
+        hasDefaultEndpoint: 'https://w3id.org/idsa/autogen/connectorEndpoint/connectorCivilservice',
+        inboundModelVersion: [
+          '4.1.2', '4.0.0',
+          '4.2.7', '4.2.0',
+          '4.2.5', '4.1.0',
+          '4.2.6', '4.2.3',
+          '4.2.4', '4.2.1',
+          '4.2.2'
+        ],
+        maintainer: 'https://sovity.de/',
+        outboundModelVersion: '4.2.7',
+        publicKey: 'https://w3id.org/idsa/autogen/publicKey/connectorCivilservice',
+        resourceCatalog: 'https://broker-reverseproxy/connectors/1732262173/894333551',
+        securityProfile: 'https://w3id.org/idsa/code/BASE_SECURITY_PROFILE',
+        title: 'Dataspace Connector Civilservice',
+        version: '8.0.2'
+      },
+      {
+        '@id': 'https://broker-reverseproxy/connectors/1732262173/894333551',
+        '@type': 'ids:ResourceCatalog',
+        sameAs: 'https://localhost:8085/api/catalogs/bb15720a-3c29-4583-b227-19e29256542c'
+      },
+      {
+        '@id': 'https://broker-reverseproxy/connectors/1781089339',
+        '@type': 'ids:BaseConnector',
+        sameAs: 'https://connector_Ameaclub',
+        curator: 'https://sovity.de/',
+        description: 'IDS Connector Ameaclub with static example resources',
+        hasDefaultEndpoint: 'https://w3id.org/idsa/autogen/connectorEndpoint/7672b568-7878-4f62-8032-5c73de969414',
+        inboundModelVersion: [
+          '4.2.5', '4.2.3',
+          '4.2.1', '4.1.2',
+          '4.0.0', '4.2.6',
+          '4.1.0', '4.2.4',
+          '4.2.2', '4.2.7',
+          '4.2.0'
+        ],
+        maintainer: 'https://sovity.de/',
+        outboundModelVersion: '4.2.7',
+        publicKey: 'https://w3id.org/idsa/autogen/publicKey/7672b568-7878-4f62-8032-5c73de969414',
+        resourceCatalog: 'https://broker-reverseproxy/connectors/1781089339/-153884610',
+        securityProfile: 'https://w3id.org/idsa/code/BASE_SECURITY_PROFILE',
+        title: 'Dataspace Connector',
+        version: '8.0.2'
+      },
+      {
+        '@id': 'https://broker-reverseproxy/connectors/1781089339/-153884610',
+        '@type': 'ids:ResourceCatalog',
+        sameAs: 'https://localhost:8083/api/catalogs/e2a612fc-04f3-47ea-8cd0-4349a61cbdd6'
+      },
+      {
+        '@id': 'https://broker-reverseproxy/connectors/2129657531',
+        '@type': 'ids:BaseConnector',
+        sameAs: 'https://connector_B',
+        curator: 'https://sovity.de/',
+        description: 'IDS Connector B with static example resources',
+        hasDefaultEndpoint: 'https://w3id.org/idsa/autogen/connectorEndpoint/6cb81441-d6a8-422e-8d4e-c740559885e7',
+        inboundModelVersion: [
+          '4.2.6', '4.0.0',
+          '4.2.7', '4.2.0',
+          '4.2.1', '4.1.0',
+          '4.2.2', '4.1.2',
+          '4.2.3', '4.2.4',
+          '4.2.5'
+        ],
+        maintainer: 'https://sovity.de/',
+        outboundModelVersion: '4.2.7',
+        publicKey: 'https://w3id.org/idsa/autogen/publicKey/319a9d00-03e8-4ed3-b98e-61d44dba6e11',
+        securityProfile: 'https://w3id.org/idsa/code/BASE_SECURITY_PROFILE',
+        title: 'Dataspace Connector',
+        version: '8.0.2'
+      },
+      {
+        '@id': 'https://w3id.org/idsa/autogen/connectorEndpoint/6cb81441-d6a8-422e-8d4e-c740559885e7',
+        '@type': 'ids:ConnectorEndpoint',
+        accessURL: 'https://connectorb:8081/api/ids/data'
+      },
+      {
+        '@id': 'https://w3id.org/idsa/autogen/connectorEndpoint/7672b568-7878-4f62-8032-5c73de969414',
+        '@type': 'ids:ConnectorEndpoint',
+        accessURL: 'https://connectorameaclub:8083/api/ids/data'
+      },
+      {
+        '@id': 'https://w3id.org/idsa/autogen/connectorEndpoint/abcd1234-5678-90ab-cdef-1234567890ab',
+        '@type': 'ids:ConnectorEndpoint',
+        accessURL: 'https://connectornaturaldisaster:8084/api/ids/data'
+      },
+      {
+        '@id': 'https://w3id.org/idsa/autogen/connectorEndpoint/connectorCivilservice',
+        '@type': 'ids:ConnectorEndpoint',
+        accessURL: 'https://connectorcivilservice:8085/api/ids/data'
+      },
+      {
+        '@id': 'https://w3id.org/idsa/autogen/connectorEndpoint/e5e2ab04-633a-44b9-87d9-a097ae6da3cf',
+        '@type': 'ids:ConnectorEndpoint',
+        accessURL: 'https://connectormhtroo:8082/api/ids/data'
+      },
+      {
+        '@id': 'https://w3id.org/idsa/autogen/publicKey/319a9d00-03e8-4ed3-b98e-61d44dba6e11',
+        '@type': 'ids:PublicKey',
+        keyType: 'https://w3id.org/idsa/code/RSA',
+        keyValue: 'VkZWc1NsRnJiSEZSVlRWRFdqSjBlR0ZIZEhCU2Vtd3pUVVZLUWxWVlZrZFJWVVpRVVRCR1VrOUZSazVUVld4RFVUSmtURkV3UmxKU1ZVWXhaSHBhZEZKdVNtdGFiWGhaVjJ4U1Mxb3dXbEJSVkZaNllsVlNXVkY2UVRWVk1qRjNVMnhrZGxJelFqVlNWa3BoVkd0V05VMTZSbmRUTWxKNlZXdGtiMVpIYkhkVmFra3pZV3BzY0dOdE1YUmpWMnh2Wkdwa2JsTlhaRFpSTWpVMFRtMTBTbFZyTlVoVFZFb3hUVWM1UjFWVVZrZGFNMXBRVFZob05Gb3pjR3BoVjJoclkwVlpkMUV5YUd4VU1sazFVMVUxYm1GWVRsRmhNMFV4WVVkdk5GRlhWWFpTUm14WllUTmFjV0ZHUlRKWmVscG9ZWGs1WVZkWFduRk5SVFYzWTFoc1JsVkhUa3RPVlRGTlZXMHhXbEl5VmpSVVYwWk9WMjB4VlZsdVJrVlRibHBMWWtSV1MxSjZUWEpaYTFWNlYxZEZlVTFYYUZWWGJHeFFaVWRzVkdGWFRuZGFhMXB1VTJwTmQyRXlOREZaVmxaS1VWaFNhMDFFVmtwWGJtc3paV3BHZWxKSGJGZFVTRkpWVjBkNFRWcHRWWFpYYkVaRVRraENkV0ZyV2pCamVYUXdXWHBGZVdNeFp6VmhWMmhLWWxjMVJHRXlVWGRXTTFvMlRUQk9WVmR0T1RWUmJFNTZXWHBHVlZwRlNuSlphbXgwVFVWTk1XUklXbTVOUjFwU1ZVUlNVbG93V1habGEyZDVWVmM1WVdKdE5YbFRWRlY1WkZWR1lVOUZNWFppVm1Rd1YxUktjMlJFVGtWTlIzUnlZMFpKTWs5WVFtMVdhMUpMVGpOcmVtUnJOSFphV0dSS1VrVkdVbEZWU1QwPQ=='
+      },
+      {
+        '@id': 'https://w3id.org/idsa/autogen/publicKey/7672b568-7878-4f62-8032-5c73de969414',
+        '@type': 'ids:PublicKey',
+        keyType: 'https://w3id.org/idsa/code/RSA',
+        keyValue: 'VUVoQ2FHTXpVbXhKU0ZKdldsTkNRMWxZVG14T2FsRm5Va1ZXVTBsSE9XMUpTR3gyWkZoSloxRlhNV3haVjA1elpGZEpaMk5JVm1saVIyeHFTVWQwYkdWVFFtOWFXRXBzVUdjOVBRPT0='
+      },
+      {
+        '@id': 'https://w3id.org/idsa/autogen/publicKey/78eb73a3-3a2a-4626-a0ff-631ab50a00f9',
+        '@type': 'ids:PublicKey',
+        keyType: 'https://w3id.org/idsa/code/RSA',
+        keyValue: 'VkZWc1NsRnJiSEZSVlRWRFdqSjBlR0ZIZEhCU2Vtd3pUVVZLUWxWVlZrZFJWVVpRVVRCR1VrOUZSazVUVld4RFVUSmtURkV3UmxKU1ZVWXhaSHBhZEZKdVNtdGFiWGhaVjJ4U1Mxb3dXbEJSVkZaNllsVlNXVkY2UVRWVk1qRjNVMnhrZGxJelFqVlNWa3BoVkd0V05VMTZSbmRUTWxKNlZXdGtiMVpIYkhkVmFra3pZV3BzY0dOdE1YUmpWMnh2Wkdwa2JsTlhaRFpSTWpVMFRtMTBTbFZyTlVoVFZFb3hUVWM1UjFWVVZrZGFNMXBRVFZob05Gb3pjR3BoVjJoclkwVlpkMUV5YUd4VU1sazFVMVUxYm1GWVRsRmhNMFV4WVVkdk5GRlhWWFpTUm14WllUTmFjV0ZHUlRKWmVscG9ZWGs1WVZkWFduRk5SVFYzWTFoc1JsVkhUa3RPVlRGTlZXMHhXbEl5VmpSVVYwWk9WMjB4VlZsdVJrVlRibHBMWWtSV1MxSjZUWEpaYTFWNlYxZEZlVTFYYUZWWGJHeFFaVWRzVkdGWFRuZGFhMXB1VTJwTmQyRXlOREZaVmxaS1VWaFNhMDFFVmtwWGJtc3paV3BHZWxKSGJGZFVTRkpWVjBkNFRWcHRWWFpYYkVaRVRraENkV0ZyV2pCamVYUXdXWHBGZVdNeFp6VmhWMmhLWWxjMVJHRXlVWGRXTTFvMlRUQk9WVmR0T1RWUmJFNTZXWHBHVlZwRlNuSlphbXgwVFVWTk1XUklXbTVOUjFwU1ZVUlNVbG93V1habGEyZDVWVmM1WVdKdE5YbFRWRlY1WkZWR1lVOUZNWFppVm1Rd1YxUktjMlJFVGtWTlIzUnlZMFpKTWs5WVFtMVdhMUpMVGpOcmVtUnJOSFphV0dSS1VrVkdVbEZWU1QwPQ=='
+      },
+      {
+        '@id': 'https://w3id.org/idsa/autogen/publicKey/abcd1234-5678-90ab-cdef-1234567890ab',
+        '@type': 'ids:PublicKey',
+        keyType: 'https://w3id.org/idsa/code/RSA',
+        keyValue: 'VUVoQ2FHTXpVbXhKU0ZKdldsTkNRMWxZVG14T2FsRm5Va1ZXVTBsSE9XMUpTR3gyWkZoSloxUnRSakJrV0Vwb1lrZFNjR015Um5wa1IxWjVTVWhDTVZsdGVIQlplVUp5V2xocloyRkhWbmxhVkRROQ=='
+      },
+      {
+        '@id': 'https://w3id.org/idsa/autogen/publicKey/connectorCivilservice',
+        '@type': 'ids:PublicKey',
+        keyType: 'https://w3id.org/idsa/code/RSA',
+        keyValue: 'VUVoQ2FHTXpVbXhKUlVwb1l6SlZNazVEUWtWU1ZrbG5ZakpaWjJWWE9URmphVUpFWVZoYWNHSklUbXhqYmxwd1dUSlZaMk5JVm1saVIyeHFTVWQwYkdWVFFtOWFXRXBzVUdjOVBRPT0='
+      },
+      {
+        '@id': 'https://w3id.org/idsa/code/BASE_SECURITY_PROFILE',
+        '@type': 'ids:SecurityProfile'
+      },
+      {
+        '@id': 'https://w3id.org/idsa/code/RSA',
+        '@type': 'ids:KeyType'
+      }
+    ],
+    '@context': {
+      description: { '@id': 'https://w3id.org/idsa/core/description' },
+      hasDefaultEndpoint: {
+        '@id': 'https://w3id.org/idsa/core/hasDefaultEndpoint',
+        '@type': '@id'
+      },
+      securityProfile: {
+        '@id': 'https://w3id.org/idsa/core/securityProfile',
+        '@type': '@id'
+      },
+      inboundModelVersion: { '@id': 'https://w3id.org/idsa/core/inboundModelVersion' },
+      title: { '@id': 'https://w3id.org/idsa/core/title' },
+      publicKey: { '@id': 'https://w3id.org/idsa/core/publicKey', '@type': '@id' },
+      outboundModelVersion: { '@id': 'https://w3id.org/idsa/core/outboundModelVersion' },
+      maintainer: {
+        '@id': 'https://w3id.org/idsa/core/maintainer',
+        '@type': '@id'
+      },
+      resourceCatalog: {
+        '@id': 'https://w3id.org/idsa/core/resourceCatalog',
+        '@type': '@id'
+      },
+      version: { '@id': 'https://w3id.org/idsa/core/version' },
+      curator: { '@id': 'https://w3id.org/idsa/core/curator', '@type': '@id' },
+      sameAs: { '@id': 'http://www.w3.org/2002/07/owl#sameAs', '@type': '@id' },
+      accessURL: { '@id': 'https://w3id.org/idsa/core/accessURL', '@type': '@id' },
+      keyValue: { '@id': 'https://w3id.org/idsa/core/keyValue' },
+      keyType: { '@id': 'https://w3id.org/idsa/core/keyType', '@type': '@id' },
+      listedConnector: {
+        '@id': 'https://w3id.org/idsa/core/listedConnector',
+        '@type': '@id'
+      },
+      owl: 'http://www.w3.org/2002/07/owl#',
+      ids: 'https://w3id.org/idsa/core/'
+    }
+  }
+}
+
+2025-10-11T19:50:42.714Z - Discovering catalog
+
+2025-10-11T19:50:42.716Z - REQUEST: POST https://localhost:8081/api/ids/description
+{
+  params: { recipient: 'https://connectorameaclub:8083/api/ids/data' },
+  data: null,
+  headers: Object [AxiosHeaders] {
+    Accept: 'application/json, text/plain, */*',
+    'Content-Type': undefined
+  }
+}
+
+2025-10-11T19:50:50.828Z - RESPONSE: POST https://localhost:8081/api/ids/description
+{
+  status: 200,
+  data: {
+    '@context': {
+      ids: 'https://w3id.org/idsa/core/',
+      idsc: 'https://w3id.org/idsa/code/'
+    },
+    '@type': 'ids:BaseConnector',
+    '@id': 'https://connector_Ameaclub',
+    'ids:version': '8.0.2',
+    'ids:publicKey': {
+      '@type': 'ids:PublicKey',
+      '@id': 'https://w3id.org/idsa/autogen/publicKey/9c3ab18f-da17-41dd-a8db-17ac729b526a',
+      'ids:keyType': { '@id': 'https://w3id.org/idsa/code/RSA' },
+      'ids:keyValue': 'UEhCaGMzUmxJSFJvWlNCQ1lYTmxOalFnUkVWU0lHOW1JSGx2ZFhJZ1FXMWxZV05zZFdJZ2NIVmliR2xqSUd0bGVTQm9aWEpsUGc9PQ=='
+    },
+    'ids:description': [
+      {
+        '@value': 'IDS Connector Ameaclub with static example resources',
+        '@type': 'http://www.w3.org/2001/XMLSchema#string'
+      }
+    ],
+    'ids:title': [
+      {
+        '@value': 'Dataspace Connector',
+        '@type': 'http://www.w3.org/2001/XMLSchema#string'
+      }
+    ],
+    'ids:hasDefaultEndpoint': {
+      '@type': 'ids:ConnectorEndpoint',
+      '@id': 'https://w3id.org/idsa/autogen/connectorEndpoint/6ef52e8e-7a18-4314-adc3-24e475d133a9',
+      'ids:accessURL': { '@id': 'https://connectorameaclub:8083/api/ids/data' }
+    },
+    'ids:resourceCatalog': [
+      {
+        '@type': 'ids:ResourceCatalog',
+        '@id': 'https://connectorameaclub:8083/api/catalogs/e2a612fc-04f3-47ea-8cd0-4349a61cbdd6'
+      }
+    ],
+    'ids:securityProfile': { '@id': 'https://w3id.org/idsa/code/BASE_SECURITY_PROFILE' },
+    'ids:maintainer': { '@id': 'https://sovity.de/' },
+    'ids:curator': { '@id': 'https://sovity.de/' },
+    'ids:inboundModelVersion': [
+      '4.2.6', '4.2.7',
+      '4.2.0', '4.1.2',
+      '4.2.1', '4.0.0',
+      '4.1.0', '4.2.4',
+      '4.2.5', '4.2.2',
+      '4.2.3'
+    ],
+    'ids:outboundModelVersion': '4.2.7'
+  }
+}
+
+2025-10-11T19:50:50.830Z - Expanding catalog
+
+2025-10-11T19:50:50.831Z - REQUEST: POST https://localhost:8081/api/ids/description
+{
+  params: {
+    recipient: 'https://connectorameaclub:8083/api/ids/data',
+    elementId: 'https://connectorameaclub:8083/api/catalogs/e2a612fc-04f3-47ea-8cd0-4349a61cbdd6'
+  },
+  data: null,
+  headers: Object [AxiosHeaders] {
+    Accept: 'application/json, text/plain, */*',
+    'Content-Type': undefined
+  }
+}
+
+2025-10-11T19:50:52.509Z - RESPONSE: POST https://localhost:8081/api/ids/description
+{
+  status: 200,
+  data: {
+    '@context': {
+      ids: 'https://w3id.org/idsa/core/',
+      idsc: 'https://w3id.org/idsa/code/'
+    },
+    '@type': 'ids:ResourceCatalog',
+    '@id': 'https://connectorameaclub:8083/api/catalogs/e2a612fc-04f3-47ea-8cd0-4349a61cbdd6',
+    'ids:offeredResource': [
+      {
+        '@type': 'ids:Resource',
+        '@id': 'https://connectorameaclub:8083/api/offers/6c2f24bf-83d2-4d76-bb7b-d27b4d54ddb2',
+        'ids:version': '1',
+        'ids:description': [
+          {
+            '@value': 'Directory of Amea entries from an Amea club (secured access; config in JSON artifact)',
+            '@language': 'EN'
+          }
+        ],
+        'ids:language': [ { '@id': 'https://w3id.org/idsa/code/EN' } ],
+        'ids:title': [ { '@value': 'Amea Data Offer', '@language': 'EN' } ],
+        'ids:publisher': { '@id': 'http://localhost:8091/api/ameaclub/members' },
+        'ids:sovereign': { '@id': 'http://localhost:8091/api/ameaclub/members' },
+        'ids:representation': [
+          {
+            '@type': 'ids:Representation',
+            '@id': 'https://connectorameaclub:8083/api/representations/3496c669-223c-4927-bee9-51598b368e4d',
+            'ids:mediaType': [Object],
+            'ids:language': [Object],
+            'ids:instance': [Array],
+            'ids:representationStandard': [Object],
+            'ids:created': [Object],
+            'ids:modified': [Object]
+          }
+        ],
+        'ids:created': {
+          '@value': '2025-10-02T11:52:33.792Z',
+          '@type': 'http://www.w3.org/2001/XMLSchema#dateTimeStamp'
+        },
+        'ids:modified': {
+          '@value': '2025-10-02T11:52:33.792Z',
+          '@type': 'http://www.w3.org/2001/XMLSchema#dateTimeStamp'
+        },
+        'ids:standardLicense': { '@id': '' },
+        'ids:resourceEndpoint': [
+          {
+            '@type': 'ids:ConnectorEndpoint',
+            '@id': 'https://w3id.org/idsa/autogen/connectorEndpoint/3ae2384a-738a-4194-95da-ef772eae8b3c',
+            'ids:endpointDocumentation': [Array],
+            'ids:accessURL': [Object]
+          }
+        ],
+        'ids:contractOffer': [
+          {
+            '@type': 'ids:ContractOffer',
+            '@id': 'https://connectorameaclub:8083/api/contracts/89c16196-759f-414a-9bff-7ea865307913',
+            'ids:provider': [Object],
+            'ids:permission': [Array],
+            'ids:contractEnd': [Object],
+            'ids:consumer': [Object],
+            'ids:contractStart': [Object],
+            'ids:contractDate': [Object]
+          }
+        ],
+        'ids:keyword': [
+          { '@value': 'AMEA', '@language': 'EN' },
+          { '@value': 'directory', '@language': 'EN' },
+          { '@value': 'club', '@language': 'EN' },
+          { '@value': 'secured', '@language': 'EN' }
+        ]
+      }
+    ]
+  }
+}
+
+2025-10-11T19:50:52.514Z - Negotiating contract
+
+2025-10-11T19:50:52.516Z - REQUEST: POST https://localhost:8081/api/ids/contract
+{
+  params: {
+    recipient: 'https://connectorameaclub:8083/api/ids/data',
+    resourceIds: 'https://connectorameaclub:8083/api/offers/6c2f24bf-83d2-4d76-bb7b-d27b4d54ddb2',
+    artifactIds: 'https://connectorameaclub:8083/api/artifacts/9efd4a4c-a7ac-45bf-8380-345d280fd860',
+    download: false
+  },
+  data: [
+    {
+      '@type': 'ids:Permission',
+      'ids:description': [
+        {
+          '@value': 'Usage policy provide access applied',
+          '@type': 'http://www.w3.org/2001/XMLSchema#string'
+        }
+      ],
+      'ids:title': [
+        {
+          '@value': 'Example Usage Policy',
+          '@type': 'http://www.w3.org/2001/XMLSchema#string'
+        }
+      ],
+      'ids:action': [ { '@id': 'https://w3id.org/idsa/code/USE' } ],
+      'ids:target': 'https://connectorameaclub:8083/api/artifacts/9efd4a4c-a7ac-45bf-8380-345d280fd860'
+    }
+  ],
+  headers: Object [AxiosHeaders] {
+    Accept: 'application/json, text/plain, */*',
+    'Content-Type': 'application/ld+json'
+  }
+}
+
+2025-10-11T19:50:57.038Z - RESPONSE: POST https://localhost:8081/api/ids/contract
+{
+  status: 201,
+  data: {
+    creationDate: '2025-10-11T19:50:54.610+0000',
+    modificationDate: '2025-10-11T19:50:54.610+0000',
+    remoteId: 'https://connectorameaclub:8083/api/agreements/a625dcf4-205c-4ac4-a894-fa6de11873df',
+    confirmed: true,
+    value: '{\n' +
+      '  "@context" : {\n' +
+      '    "ids" : "https://w3id.org/idsa/core/",\n' +
+      '    "idsc" : "https://w3id.org/idsa/code/"\n' +
+      '  },\n' +
+      '  "@type" : "ids:ContractAgreement",\n' +
+      '  "@id" : "https://connectorameaclub:8083/api/agreements/a625dcf4-205c-4ac4-a894-fa6de11873df",\n' +
+      '  "ids:provider" : {\n' +
+      '    "@id" : "https://connector_Ameaclub"\n' +
+      '  },\n' +
+      '  "ids:permission" : [ {\n' +
+      '    "@type" : "ids:Permission",\n' +
+      '    "@id" : "https://w3id.org/idsa/autogen/permission/1041ef40-3b0c-47e4-bedc-e80c530081d0",\n' +
+      '    "ids:description" : [ {\n' +
+      '      "@value" : "Usage policy provide access applied",\n' +
+      '      "@type" : "http://www.w3.org/2001/XMLSchema#string"\n' +
+      '    } ],\n' +
+      '    "ids:target" : {\n' +
+      '      "@id" : "https://connectorameaclub:8083/api/artifacts/9efd4a4c-a7ac-45bf-8380-345d280fd860"\n' +
+      '    },\n' +
+      '    "ids:title" : [ {\n' +
+      '      "@value" : "Example Usage Policy",\n' +
+      '      "@type" : "http://www.w3.org/2001/XMLSchema#string"\n' +
+      '    } ],\n' +
+      '    "ids:assignee" : [ {\n' +
+      '      "@id" : "https://connector_B"\n' +
+      '    } ],\n' +
+      '    "ids:assigner" : [ {\n' +
+      '      "@id" : "https://connector_Ameaclub"\n' +
+      '    } ],\n' +
+      '    "ids:action" : [ {\n' +
+      '      "@id" : "https://w3id.org/idsa/code/USE"\n' +
+      '    } ]\n' +
+      '  } ],\n' +
+      '  "ids:contractEnd" : {\n' +
+      '    "@value" : "2028-10-22T07:48:37.068Z",\n' +
+      '    "@type" : "http://www.w3.org/2001/XMLSchema#dateTimeStamp"\n' +
+      '  },\n' +
+      '  "ids:consumer" : {\n' +
+      '    "@id" : "https://connector_B"\n' +
+      '  },\n' +
+      '  "ids:contractStart" : {\n' +
+      '    "@value" : "2025-10-11T19:50:53.690Z",\n' +
+      '    "@type" : "http://www.w3.org/2001/XMLSchema#dateTimeStamp"\n' +
+      '  },\n' +
+      '  "ids:contractDate" : {\n' +
+      '    "@value" : "2025-10-11T19:50:53.689Z",\n' +
+      '    "@type" : "http://www.w3.org/2001/XMLSchema#dateTimeStamp"\n' +
+      '  }\n' +
+      '}',
+    _links: {
+      self: {
+        href: 'https://localhost:8081/api/agreements/9ba4ced5-b0d5-4361-9bff-e398943729ba'
+      },
+      artifacts: {
+        href: 'https://localhost:8081/api/agreements/9ba4ced5-b0d5-4361-9bff-e398943729ba/artifacts{?page,size}',
+        templated: true
+      }
+    }
+  }
+}
+
+2025-10-11T19:50:57.041Z - Fetching data link
+
+2025-10-11T19:50:57.042Z - REQUEST: GET https://localhost:8081/api/agreements/9ba4ced5-b0d5-4361-9bff-e398943729ba/artifacts
+{
+  params: undefined,
+  data: undefined,
+  headers: Object [AxiosHeaders] {
+    Accept: 'application/json, text/plain, */*',
+    'Content-Type': undefined
+  }
+}
+
+2025-10-11T19:50:57.620Z - RESPONSE: GET https://localhost:8081/api/agreements/9ba4ced5-b0d5-4361-9bff-e398943729ba/artifacts
+{
+  status: 200,
+  data: {
+    _embedded: {
+      artifacts: [
+        {
+          creationDate: '2025-10-02T11:52:55.551+0000',
+          modificationDate: '2025-10-11T19:50:55.526+0000',
+          remoteId: 'https://connectorameaclub:8083/api/artifacts/9efd4a4c-a7ac-45bf-8380-345d280fd860',
+          title: 'Amea Club Secured Config Artifact',
+          description: '',
+          numAccessed: 9,
+          byteSize: 0,
+          checkSum: 0,
+          additional: {
+            'ids:byteSize': '392',
+            'ids:creationDate': '2025-10-02T11:52:36.050Z',
+            'ids:checkSum': '3374921715'
+          },
+          _links: {
+            self: [Object],
+            data: [Object],
+            representations: [Object],
+            agreements: [Object],
+            subscriptions: [Object],
+            route: [Object]
+          }
+        }
+      ]
+    },
+    _links: {
+      self: {
+        href: 'https://localhost:8081/api/agreements/9ba4ced5-b0d5-4361-9bff-e398943729ba/artifacts?page=0&size=30'
+      }
+    },
+    page: { size: 30, totalElements: 1, totalPages: 1, number: 0 }
+  }
+}
+
+2025-10-11T19:50:57.622Z - Downloading payload (secured JSON)
+
+2025-10-11T19:50:57.623Z - REQUEST: GET https://localhost:8081/api/artifacts/e44126bf-cae1-47b0-baef-ded802c68ffa/data
+{
+  params: undefined,
+  data: undefined,
+  headers: Object [AxiosHeaders] {
+    Accept: 'application/json, text/plain, */*',
+    'Content-Type': undefined
+  }
+}
+
+2025-10-11T19:50:58.590Z - RESPONSE: GET https://localhost:8081/api/artifacts/e44126bf-cae1-47b0-baef-ded802c68ffa/data
+{
+  status: 200,
+  data: {
+    type: 'secured-config',
+    version: 1,
+    endpoint: 'http://localhost:8091/api/ameaclub/members',
+    auth: {
+      scheme: 'Bearer',
+      token: 'TRj73hG32LdPOOlvOQorGf2wWiwhPPaQ6VBZqIIf8c4j202WLXECIUD3DkkrEQEU'
+    },
+    crypto: { alg: 'AES-256-GCM', secret: 'hghenhutu@URu4', encoding: 'utf8' },
+    meta: {
+      service: 'ameaclub',
+      issuedAt: '2025-10-02T11:52:35.905Z',
+      note: 'Confidential. Do not log/store in plaintext.'
+    }
+  }
+}
+
+2025-10-11T19:50:58.591Z - Payload (unredacted)
+{
+  type: 'secured-config',
+  version: 1,
+  endpoint: 'http://localhost:8091/api/ameaclub/members',
+  auth: {
+    scheme: 'Bearer',
+    token: 'TRj73hG32LdPOOlvOQorGf2wWiwhPPaQ6VBZqIIf8c4j202WLXECIUD3DkkrEQEU'
+  },
+  crypto: { alg: 'AES-256-GCM', secret: 'hghenhutu@URu4', encoding: 'utf8' },
+  meta: {
+    service: 'ameaclub',
+    issuedAt: '2025-10-02T11:52:35.905Z',
+    note: 'Confidential. Do not log/store in plaintext.'
+  }
+}
+
+2025-10-11T19:50:58.592Z - Secured config received (redacted)
+{
+  type: 'secured-config',
+  version: 1,
+  endpoint: 'http://localhost:8091/api/ameaclub/members',
+  auth: { scheme: 'Bearer', token: '***REDACTED***' },
+  crypto: { alg: 'AES-256-GCM', secret: '***REDACTED***', encoding: 'utf8' },
+  meta: {
+    service: 'ameaclub',
+    issuedAt: '2025-10-02T11:52:35.905Z',
+    note: 'Confidential. Do not log/store in plaintext.'
+  }
+}
+
+2025-10-11T19:50:58.592Z - Consumer flow completed successfully
+{
+  registered_consumer: true,
+  registrationResponse: {
+    '@graph': [
+      {
+        '@id': 'https://broker-reverseproxy/connectors/',
+        '@type': 'ids:ConnectorCatalog',
+        listedConnector: [
+          'https://broker-reverseproxy/connectors/1732262173',
+          'https://broker-reverseproxy/connectors/-879192093',
+          'https://broker-reverseproxy/connectors/1781089339',
+          'https://broker-reverseproxy/connectors/-657649866',
+          'https://broker-reverseproxy/connectors/2129657531'
+        ]
+      },
+      {
+        '@id': 'https://broker-reverseproxy/connectors/-657649866',
+        '@type': 'ids:BaseConnector',
+        sameAs: 'https://connector_Mhtroo',
+        curator: 'https://sovity.de/',
+        description: 'IDS Connector Mhtroo with static example resources',
+        hasDefaultEndpoint: 'https://w3id.org/idsa/autogen/connectorEndpoint/e5e2ab04-633a-44b9-87d9-a097ae6da3cf',
+        inboundModelVersion: [
+          '4.2.1', '4.2.4',
+          '4.2.2', '4.0.0',
+          '4.2.5', '4.2.0',
+          '4.1.2', '4.2.7',
+          '4.1.0', '4.2.3',
+          '4.2.6'
+        ],
+        maintainer: 'https://sovity.de/',
+        outboundModelVersion: '4.2.7',
+        publicKey: 'https://w3id.org/idsa/autogen/publicKey/78eb73a3-3a2a-4626-a0ff-631ab50a00f9',
+        resourceCatalog: 'https://broker-reverseproxy/connectors/-657649866/61163367',
+        securityProfile: 'https://w3id.org/idsa/code/BASE_SECURITY_PROFILE',
+        title: 'Dataspace Connector',
+        version: '8.0.2'
+      },
+      {
+        '@id': 'https://broker-reverseproxy/connectors/-657649866/61163367',
+        '@type': 'ids:ResourceCatalog',
+        sameAs: 'https://localhost:8082/api/catalogs/38b4545a-45fb-4fee-853d-a6854556af4b'
+      },
+      {
+        '@id': 'https://broker-reverseproxy/connectors/-879192093',
+        '@type': 'ids:BaseConnector',
+        sameAs: 'https://connector_Naturaldisaster',
+        curator: 'https://sovity.de/',
+        description: 'IDS Connector Naturaldisaster with static example resources',
+        hasDefaultEndpoint: 'https://w3id.org/idsa/autogen/connectorEndpoint/abcd1234-5678-90ab-cdef-1234567890ab',
+        inboundModelVersion: [
+          '4.2.0', '4.1.0',
+          '4.0.0', '4.2.5',
+          '4.2.6', '4.2.3',
+          '4.2.4', '4.2.7',
+          '4.2.1', '4.1.2',
+          '4.2.2'
+        ],
+        maintainer: 'https://sovity.de/',
+        outboundModelVersion: '4.2.7',
+        publicKey: 'https://w3id.org/idsa/autogen/publicKey/abcd1234-5678-90ab-cdef-1234567890ab',
+        resourceCatalog: 'https://broker-reverseproxy/connectors/-879192093/-1356068299',
+        securityProfile: 'https://w3id.org/idsa/code/BASE_SECURITY_PROFILE',
+        title: 'Dataspace Connector',
+        version: '8.0.2'
+      },
+      {
+        '@id': 'https://broker-reverseproxy/connectors/-879192093/-1356068299',
+        '@type': 'ids:ResourceCatalog',
+        sameAs: 'https://localhost:8084/api/catalogs/f5502843-824e-4e61-b456-06919a98370f'
+      },
+      {
+        '@id': 'https://broker-reverseproxy/connectors/1732262173',
+        '@type': 'ids:BaseConnector',
+        sameAs: 'https://connectorCivilservice',
+        curator: 'https://sovity.de/',
+        description: 'IDS Connector Civilservice for vehicle monitoring and data sharing',
+        hasDefaultEndpoint: 'https://w3id.org/idsa/autogen/connectorEndpoint/connectorCivilservice',
+        inboundModelVersion: [
+          '4.1.2', '4.0.0',
+          '4.2.7', '4.2.0',
+          '4.2.5', '4.1.0',
+          '4.2.6', '4.2.3',
+          '4.2.4', '4.2.1',
+          '4.2.2'
+        ],
+        maintainer: 'https://sovity.de/',
+        outboundModelVersion: '4.2.7',
+        publicKey: 'https://w3id.org/idsa/autogen/publicKey/connectorCivilservice',
+        resourceCatalog: 'https://broker-reverseproxy/connectors/1732262173/894333551',
+        securityProfile: 'https://w3id.org/idsa/code/BASE_SECURITY_PROFILE',
+        title: 'Dataspace Connector Civilservice',
+        version: '8.0.2'
+      },
+      {
+        '@id': 'https://broker-reverseproxy/connectors/1732262173/894333551',
+        '@type': 'ids:ResourceCatalog',
+        sameAs: 'https://localhost:8085/api/catalogs/bb15720a-3c29-4583-b227-19e29256542c'
+      },
+      {
+        '@id': 'https://broker-reverseproxy/connectors/1781089339',
+        '@type': 'ids:BaseConnector',
+        sameAs: 'https://connector_Ameaclub',
+        curator: 'https://sovity.de/',
+        description: 'IDS Connector Ameaclub with static example resources',
+        hasDefaultEndpoint: 'https://w3id.org/idsa/autogen/connectorEndpoint/7672b568-7878-4f62-8032-5c73de969414',
+        inboundModelVersion: [
+          '4.2.5', '4.2.3',
+          '4.2.1', '4.1.2',
+          '4.0.0', '4.2.6',
+          '4.1.0', '4.2.4',
+          '4.2.2', '4.2.7',
+          '4.2.0'
+        ],
+        maintainer: 'https://sovity.de/',
+        outboundModelVersion: '4.2.7',
+        publicKey: 'https://w3id.org/idsa/autogen/publicKey/7672b568-7878-4f62-8032-5c73de969414',
+        resourceCatalog: 'https://broker-reverseproxy/connectors/1781089339/-153884610',
+        securityProfile: 'https://w3id.org/idsa/code/BASE_SECURITY_PROFILE',
+        title: 'Dataspace Connector',
+        version: '8.0.2'
+      },
+      {
+        '@id': 'https://broker-reverseproxy/connectors/1781089339/-153884610',
+        '@type': 'ids:ResourceCatalog',
+        sameAs: 'https://localhost:8083/api/catalogs/e2a612fc-04f3-47ea-8cd0-4349a61cbdd6'
+      },
+      {
+        '@id': 'https://broker-reverseproxy/connectors/2129657531',
+        '@type': 'ids:BaseConnector',
+        sameAs: 'https://connector_B',
+        curator: 'https://sovity.de/',
+        description: 'IDS Connector B with static example resources',
+        hasDefaultEndpoint: 'https://w3id.org/idsa/autogen/connectorEndpoint/6cb81441-d6a8-422e-8d4e-c740559885e7',
+        inboundModelVersion: [
+          '4.2.6', '4.0.0',
+          '4.2.7', '4.2.0',
+          '4.2.1', '4.1.0',
+          '4.2.2', '4.1.2',
+          '4.2.3', '4.2.4',
+          '4.2.5'
+        ],
+        maintainer: 'https://sovity.de/',
+        outboundModelVersion: '4.2.7',
+        publicKey: 'https://w3id.org/idsa/autogen/publicKey/319a9d00-03e8-4ed3-b98e-61d44dba6e11',
+        securityProfile: 'https://w3id.org/idsa/code/BASE_SECURITY_PROFILE',
+        title: 'Dataspace Connector',
+        version: '8.0.2'
+      },
+      {
+        '@id': 'https://w3id.org/idsa/autogen/connectorEndpoint/6cb81441-d6a8-422e-8d4e-c740559885e7',
+        '@type': 'ids:ConnectorEndpoint',
+        accessURL: 'https://connectorb:8081/api/ids/data'
+      },
+      {
+        '@id': 'https://w3id.org/idsa/autogen/connectorEndpoint/7672b568-7878-4f62-8032-5c73de969414',
+        '@type': 'ids:ConnectorEndpoint',
+        accessURL: 'https://connectorameaclub:8083/api/ids/data'
+      },
+      {
+        '@id': 'https://w3id.org/idsa/autogen/connectorEndpoint/abcd1234-5678-90ab-cdef-1234567890ab',
+        '@type': 'ids:ConnectorEndpoint',
+        accessURL: 'https://connectornaturaldisaster:8084/api/ids/data'
+      },
+      {
+        '@id': 'https://w3id.org/idsa/autogen/connectorEndpoint/connectorCivilservice',
+        '@type': 'ids:ConnectorEndpoint',
+        accessURL: 'https://connectorcivilservice:8085/api/ids/data'
+      },
+      {
+        '@id': 'https://w3id.org/idsa/autogen/connectorEndpoint/e5e2ab04-633a-44b9-87d9-a097ae6da3cf',
+        '@type': 'ids:ConnectorEndpoint',
+        accessURL: 'https://connectormhtroo:8082/api/ids/data'
+      },
+      {
+        '@id': 'https://w3id.org/idsa/autogen/publicKey/319a9d00-03e8-4ed3-b98e-61d44dba6e11',
+        '@type': 'ids:PublicKey',
+        keyType: 'https://w3id.org/idsa/code/RSA',
+        keyValue: 'VkZWc1NsRnJiSEZSVlRWRFdqSjBlR0ZIZEhCU2Vtd3pUVVZLUWxWVlZrZFJWVVpRVVRCR1VrOUZSazVUVld4RFVUSmtURkV3UmxKU1ZVWXhaSHBhZEZKdVNtdGFiWGhaVjJ4U1Mxb3dXbEJSVkZaNllsVlNXVkY2UVRWVk1qRjNVMnhrZGxJelFqVlNWa3BoVkd0V05VMTZSbmRUTWxKNlZXdGtiMVpIYkhkVmFra3pZV3BzY0dOdE1YUmpWMnh2Wkdwa2JsTlhaRFpSTWpVMFRtMTBTbFZyTlVoVFZFb3hUVWM1UjFWVVZrZGFNMXBRVFZob05Gb3pjR3BoVjJoclkwVlpkMUV5YUd4VU1sazFVMVUxYm1GWVRsRmhNMFV4WVVkdk5GRlhWWFpTUm14WllUTmFjV0ZHUlRKWmVscG9ZWGs1WVZkWFduRk5SVFYzWTFoc1JsVkhUa3RPVlRGTlZXMHhXbEl5VmpSVVYwWk9WMjB4VlZsdVJrVlRibHBMWWtSV1MxSjZUWEpaYTFWNlYxZEZlVTFYYUZWWGJHeFFaVWRzVkdGWFRuZGFhMXB1VTJwTmQyRXlOREZaVmxaS1VWaFNhMDFFVmtwWGJtc3paV3BHZWxKSGJGZFVTRkpWVjBkNFRWcHRWWFpYYkVaRVRraENkV0ZyV2pCamVYUXdXWHBGZVdNeFp6VmhWMmhLWWxjMVJHRXlVWGRXTTFvMlRUQk9WVmR0T1RWUmJFNTZXWHBHVlZwRlNuSlphbXgwVFVWTk1XUklXbTVOUjFwU1ZVUlNVbG93V1habGEyZDVWVmM1WVdKdE5YbFRWRlY1WkZWR1lVOUZNWFppVm1Rd1YxUktjMlJFVGtWTlIzUnlZMFpKTWs5WVFtMVdhMUpMVGpOcmVtUnJOSFphV0dSS1VrVkdVbEZWU1QwPQ=='
+      },
+      {
+        '@id': 'https://w3id.org/idsa/autogen/publicKey/7672b568-7878-4f62-8032-5c73de969414',
+        '@type': 'ids:PublicKey',
+        keyType: 'https://w3id.org/idsa/code/RSA',
+        keyValue: 'VUVoQ2FHTXpVbXhKU0ZKdldsTkNRMWxZVG14T2FsRm5Va1ZXVTBsSE9XMUpTR3gyWkZoSloxRlhNV3haVjA1elpGZEpaMk5JVm1saVIyeHFTVWQwYkdWVFFtOWFXRXBzVUdjOVBRPT0='
+      },
+      {
+        '@id': 'https://w3id.org/idsa/autogen/publicKey/78eb73a3-3a2a-4626-a0ff-631ab50a00f9',
+        '@type': 'ids:PublicKey',
+        keyType: 'https://w3id.org/idsa/code/RSA',
+        keyValue: 'VkZWc1NsRnJiSEZSVlRWRFdqSjBlR0ZIZEhCU2Vtd3pUVVZLUWxWVlZrZFJWVVpRVVRCR1VrOUZSazVUVld4RFVUSmtURkV3UmxKU1ZVWXhaSHBhZEZKdVNtdGFiWGhaVjJ4U1Mxb3dXbEJSVkZaNllsVlNXVkY2UVRWVk1qRjNVMnhrZGxJelFqVlNWa3BoVkd0V05VMTZSbmRUTWxKNlZXdGtiMVpIYkhkVmFra3pZV3BzY0dOdE1YUmpWMnh2Wkdwa2JsTlhaRFpSTWpVMFRtMTBTbFZyTlVoVFZFb3hUVWM1UjFWVVZrZGFNMXBRVFZob05Gb3pjR3BoVjJoclkwVlpkMUV5YUd4VU1sazFVMVUxYm1GWVRsRmhNMFV4WVVkdk5GRlhWWFpTUm14WllUTmFjV0ZHUlRKWmVscG9ZWGs1WVZkWFduRk5SVFYzWTFoc1JsVkhUa3RPVlRGTlZXMHhXbEl5VmpSVVYwWk9WMjB4VlZsdVJrVlRibHBMWWtSV1MxSjZUWEpaYTFWNlYxZEZlVTFYYUZWWGJHeFFaVWRzVkdGWFRuZGFhMXB1VTJwTmQyRXlOREZaVmxaS1VWaFNhMDFFVmtwWGJtc3paV3BHZWxKSGJGZFVTRkpWVjBkNFRWcHRWWFpYYkVaRVRraENkV0ZyV2pCamVYUXdXWHBGZVdNeFp6VmhWMmhLWWxjMVJHRXlVWGRXTTFvMlRUQk9WVmR0T1RWUmJFNTZXWHBHVlZwRlNuSlphbXgwVFVWTk1XUklXbTVOUjFwU1ZVUlNVbG93V1habGEyZDVWVmM1WVdKdE5YbFRWRlY1WkZWR1lVOUZNWFppVm1Rd1YxUktjMlJFVGtWTlIzUnlZMFpKTWs5WVFtMVdhMUpMVGpOcmVtUnJOSFphV0dSS1VrVkdVbEZWU1QwPQ=='
+      },
+      {
+        '@id': 'https://w3id.org/idsa/autogen/publicKey/abcd1234-5678-90ab-cdef-1234567890ab',
+        '@type': 'ids:PublicKey',
+        keyType: 'https://w3id.org/idsa/code/RSA',
+        keyValue: 'VUVoQ2FHTXpVbXhKU0ZKdldsTkNRMWxZVG14T2FsRm5Va1ZXVTBsSE9XMUpTR3gyWkZoSloxUnRSakJrV0Vwb1lrZFNjR015Um5wa1IxWjVTVWhDTVZsdGVIQlplVUp5V2xocloyRkhWbmxhVkRROQ=='
+      },
+      {
+        '@id': 'https://w3id.org/idsa/autogen/publicKey/connectorCivilservice',
+        '@type': 'ids:PublicKey',
+        keyType: 'https://w3id.org/idsa/code/RSA',
+        keyValue: 'VUVoQ2FHTXpVbXhKUlVwb1l6SlZNazVEUWtWU1ZrbG5ZakpaWjJWWE9URmphVUpFWVZoYWNHSklUbXhqYmxwd1dUSlZaMk5JVm1saVIyeHFTVWQwYkdWVFFtOWFXRXBzVUdjOVBRPT0='
+      },
+      {
+        '@id': 'https://w3id.org/idsa/code/BASE_SECURITY_PROFILE',
+        '@type': 'ids:SecurityProfile'
+      },
+      {
+        '@id': 'https://w3id.org/idsa/code/RSA',
+        '@type': 'ids:KeyType'
+      }
+    ],
+    '@context': {
+      description: { '@id': 'https://w3id.org/idsa/core/description' },
+      hasDefaultEndpoint: {
+        '@id': 'https://w3id.org/idsa/core/hasDefaultEndpoint',
+        '@type': '@id'
+      },
+      securityProfile: {
+        '@id': 'https://w3id.org/idsa/core/securityProfile',
+        '@type': '@id'
+      },
+      inboundModelVersion: { '@id': 'https://w3id.org/idsa/core/inboundModelVersion' },
+      title: { '@id': 'https://w3id.org/idsa/core/title' },
+      publicKey: { '@id': 'https://w3id.org/idsa/core/publicKey', '@type': '@id' },
+      outboundModelVersion: { '@id': 'https://w3id.org/idsa/core/outboundModelVersion' },
+      maintainer: {
+        '@id': 'https://w3id.org/idsa/core/maintainer',
+        '@type': '@id'
+      },
+      resourceCatalog: {
+        '@id': 'https://w3id.org/idsa/core/resourceCatalog',
+        '@type': '@id'
+      },
+      version: { '@id': 'https://w3id.org/idsa/core/version' },
+      curator: { '@id': 'https://w3id.org/idsa/core/curator', '@type': '@id' },
+      sameAs: { '@id': 'http://www.w3.org/2002/07/owl#sameAs', '@type': '@id' },
+      accessURL: { '@id': 'https://w3id.org/idsa/core/accessURL', '@type': '@id' },
+      keyValue: { '@id': 'https://w3id.org/idsa/core/keyValue' },
+      keyType: { '@id': 'https://w3id.org/idsa/core/keyType', '@type': '@id' },
+      listedConnector: {
+        '@id': 'https://w3id.org/idsa/core/listedConnector',
+        '@type': '@id'
+      },
+      owl: 'http://www.w3.org/2002/07/owl#',
+      ids: 'https://w3id.org/idsa/core/'
+    }
+  },
+  discoveryResponse: {
+    '@context': {
+      ids: 'https://w3id.org/idsa/core/',
+      idsc: 'https://w3id.org/idsa/code/'
+    },
+    '@type': 'ids:BaseConnector',
+    '@id': 'https://connector_Ameaclub',
+    'ids:version': '8.0.2',
+    'ids:publicKey': {
+      '@type': 'ids:PublicKey',
+      '@id': 'https://w3id.org/idsa/autogen/publicKey/9c3ab18f-da17-41dd-a8db-17ac729b526a',
+      'ids:keyType': { '@id': 'https://w3id.org/idsa/code/RSA' },
+      'ids:keyValue': 'UEhCaGMzUmxJSFJvWlNCQ1lYTmxOalFnUkVWU0lHOW1JSGx2ZFhJZ1FXMWxZV05zZFdJZ2NIVmliR2xqSUd0bGVTQm9aWEpsUGc9PQ=='
+    },
+    'ids:description': [
+      {
+        '@value': 'IDS Connector Ameaclub with static example resources',
+        '@type': 'http://www.w3.org/2001/XMLSchema#string'
+      }
+    ],
+    'ids:title': [
+      {
+        '@value': 'Dataspace Connector',
+        '@type': 'http://www.w3.org/2001/XMLSchema#string'
+      }
+    ],
+    'ids:hasDefaultEndpoint': {
+      '@type': 'ids:ConnectorEndpoint',
+      '@id': 'https://w3id.org/idsa/autogen/connectorEndpoint/6ef52e8e-7a18-4314-adc3-24e475d133a9',
+      'ids:accessURL': { '@id': 'https://connectorameaclub:8083/api/ids/data' }
+    },
+    'ids:resourceCatalog': [
+      {
+        '@type': 'ids:ResourceCatalog',
+        '@id': 'https://connectorameaclub:8083/api/catalogs/e2a612fc-04f3-47ea-8cd0-4349a61cbdd6'
+      }
+    ],
+    'ids:securityProfile': { '@id': 'https://w3id.org/idsa/code/BASE_SECURITY_PROFILE' },
+    'ids:maintainer': { '@id': 'https://sovity.de/' },
+    'ids:curator': { '@id': 'https://sovity.de/' },
+    'ids:inboundModelVersion': [
+      '4.2.6', '4.2.7',
+      '4.2.0', '4.1.2',
+      '4.2.1', '4.0.0',
+      '4.1.0', '4.2.4',
+      '4.2.5', '4.2.2',
+      '4.2.3'
+    ],
+    'ids:outboundModelVersion': '4.2.7'
+  },
+  providerCatalog: 'https://connectorameaclub:8083/api/catalogs/e2a612fc-04f3-47ea-8cd0-4349a61cbdd6',
+  expansionResponse: {
+    '@context': {
+      ids: 'https://w3id.org/idsa/core/',
+      idsc: 'https://w3id.org/idsa/code/'
+    },
+    '@type': 'ids:ResourceCatalog',
+    '@id': 'https://connectorameaclub:8083/api/catalogs/e2a612fc-04f3-47ea-8cd0-4349a61cbdd6',
+    'ids:offeredResource': [
+      {
+        '@type': 'ids:Resource',
+        '@id': 'https://connectorameaclub:8083/api/offers/6c2f24bf-83d2-4d76-bb7b-d27b4d54ddb2',
+        'ids:version': '1',
+        'ids:description': [
+          {
+            '@value': 'Directory of Amea entries from an Amea club (secured access; config in JSON artifact)',
+            '@language': 'EN'
+          }
+        ],
+        'ids:language': [ { '@id': 'https://w3id.org/idsa/code/EN' } ],
+        'ids:title': [ { '@value': 'Amea Data Offer', '@language': 'EN' } ],
+        'ids:publisher': { '@id': 'http://localhost:8091/api/ameaclub/members' },
+        'ids:sovereign': { '@id': 'http://localhost:8091/api/ameaclub/members' },
+        'ids:representation': [
+          {
+            '@type': 'ids:Representation',
+            '@id': 'https://connectorameaclub:8083/api/representations/3496c669-223c-4927-bee9-51598b368e4d',
+            'ids:mediaType': [Object],
+            'ids:language': [Object],
+            'ids:instance': [Array],
+            'ids:representationStandard': [Object],
+            'ids:created': [Object],
+            'ids:modified': [Object]
+          }
+        ],
+        'ids:created': {
+          '@value': '2025-10-02T11:52:33.792Z',
+          '@type': 'http://www.w3.org/2001/XMLSchema#dateTimeStamp'
+        },
+        'ids:modified': {
+          '@value': '2025-10-02T11:52:33.792Z',
+          '@type': 'http://www.w3.org/2001/XMLSchema#dateTimeStamp'
+        },
+        'ids:standardLicense': { '@id': '' },
+        'ids:resourceEndpoint': [
+          {
+            '@type': 'ids:ConnectorEndpoint',
+            '@id': 'https://w3id.org/idsa/autogen/connectorEndpoint/3ae2384a-738a-4194-95da-ef772eae8b3c',
+            'ids:endpointDocumentation': [Array],
+            'ids:accessURL': [Object]
+          }
+        ],
+        'ids:contractOffer': [
+          {
+            '@type': 'ids:ContractOffer',
+            '@id': 'https://connectorameaclub:8083/api/contracts/89c16196-759f-414a-9bff-7ea865307913',
+            'ids:provider': [Object],
+            'ids:permission': [Array],
+            'ids:contractEnd': [Object],
+            'ids:consumer': [Object],
+            'ids:contractStart': [Object],
+            'ids:contractDate': [Object]
+          }
+        ],
+        'ids:keyword': [
+          { '@value': 'AMEA', '@language': 'EN' },
+          { '@value': 'directory', '@language': 'EN' },
+          { '@value': 'club', '@language': 'EN' },
+          { '@value': 'secured', '@language': 'EN' }
+        ]
+      }
+    ]
+  },
+  providerResource: 'https://connectorameaclub:8083/api/offers/6c2f24bf-83d2-4d76-bb7b-d27b4d54ddb2',
+  providerRule: 'https://connectorameaclub:8083/api/rules/e2c8e588-0fda-4ae8-bdf3-ad750b0b04c6',
+  providerRepresentation: 'https://connectorameaclub:8083/api/representations/3496c669-223c-4927-bee9-51598b368e4d',
+  providerArtifact: 'https://connectorameaclub:8083/api/artifacts/9efd4a4c-a7ac-45bf-8380-345d280fd860',
+  agreementId: '9ba4ced5-b0d5-4361-9bff-e398943729ba',
+  dataLink: 'https://localhost:8081/api/artifacts/e44126bf-cae1-47b0-baef-ded802c68ffa/data'
+}
+

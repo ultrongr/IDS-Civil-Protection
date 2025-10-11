@@ -1240,7 +1240,7 @@ app.post('/api/plan-routes', async (_req, res) => {
         seats: { maxLoad: Math.max(0, Number(v.seatsLeft) || 0) }  // map, not array
       },
       costPerKilometer: 1,
-      costPerHour: 2
+      costPerHour: 5
       // optional: costPerKilometer, costPerHour, time windows...
     }));
 
